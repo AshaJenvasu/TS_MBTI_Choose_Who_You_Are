@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "defaultMode": "plan",
+    "deny": [
+      "Bash(git push:*)",
+      "Edit(**/*.env)",
+      "Bash(rm -rf:*)"
+    ]
+  }
+}
