@@ -1,0 +1,318 @@
+{
+  "id": "05920457-39db-423c-8252-c8ef40d9eedd",
+  "prevId": "18486e3e-8488-413b-ab8d-da85cee0ced3",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.character": {
+      "name": "character",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "character_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "mbti_type": {
+          "name": "mbti_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "house": {
+          "name": "house",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "image_url": {
+          "name": "image_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "character_mbti_type_mbti_type_info_type_code_fk": {
+          "name": "character_mbti_type_mbti_type_info_type_code_fk",
+          "tableFrom": "character",
+          "tableTo": "mbti_type_info",
+          "columnsFrom": [
+            "mbti_type"
+          ],
+          "columnsTo": [
+            "type_code"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "character_mbti_type_unique": {
+          "name": "character_mbti_type_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "mbti_type"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.mbti_type_compatibility": {
+      "name": "mbti_type_compatibility",
+      "schema": "",
+      "columns": {
+        "type_code": {
+          "name": "type_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "other_type": {
+          "name": "other_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "compatibility_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "mbti_type_compatibility_type_code_mbti_type_info_type_code_fk": {
+          "name": "mbti_type_compatibility_type_code_mbti_type_info_type_code_fk",
+          "tableFrom": "mbti_type_compatibility",
+          "tableTo": "mbti_type_info",
+          "columnsFrom": [
+            "type_code"
+          ],
+          "columnsTo": [
+            "type_code"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "mbti_type_compatibility_other_type_mbti_type_info_type_code_fk": {
+          "name": "mbti_type_compatibility_other_type_mbti_type_info_type_code_fk",
+          "tableFrom": "mbti_type_compatibility",
+          "tableTo": "mbti_type_info",
+          "columnsFrom": [
+            "other_type"
+          ],
+          "columnsTo": [
+            "type_code"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "mbti_type_compatibility_type_code_other_type_kind_pk": {
+          "name": "mbti_type_compatibility_type_code_other_type_kind_pk",
+          "columns": [
+            "type_code",
+            "other_type",
+            "kind"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "mbti_type_compatibility_not_self": {
+          "name": "mbti_type_compatibility_not_self",
+          "value": "\"mbti_type_compatibility\".\"other_type\" <> \"mbti_type_compatibility\".\"type_code\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.mbti_type_info": {
+      "name": "mbti_type_info",
+      "schema": "",
+      "columns": {
+        "type_code": {
+          "name": "type_code",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "golden_pair_type": {
+          "name": "golden_pair_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "mbti_type_info_golden_pair_type_fk": {
+          "name": "mbti_type_info_golden_pair_type_fk",
+          "tableFrom": "mbti_type_info",
+          "tableTo": "mbti_type_info",
+          "columnsFrom": [
+            "golden_pair_type"
+          ],
+          "columnsTo": [
+            "type_code"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "mbti_type_info_golden_pair_not_self": {
+          "name": "mbti_type_info_golden_pair_not_self",
+          "value": "\"mbti_type_info\".\"golden_pair_type\" <> \"mbti_type_info\".\"type_code\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.test_result": {
+      "name": "test_result",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "guest_token": {
+          "name": "guest_token",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mbti_type": {
+          "name": "mbti_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "matched_character_id": {
+          "name": "matched_character_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "test_result_mbti_type_mbti_type_info_type_code_fk": {
+          "name": "test_result_mbti_type_mbti_type_info_type_code_fk",
+          "tableFrom": "test_result",
+          "tableTo": "mbti_type_info",
+          "columnsFrom": [
+            "mbti_type"
+          ],
+          "columnsTo": [
+            "type_code"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "test_result_matched_character_id_character_id_fk": {
+          "name": "test_result_matched_character_id_character_id_fk",
+          "tableFrom": "test_result",
+          "tableTo": "character",
+          "columnsFrom": [
+            "matched_character_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "test_result_guest_token_unique": {
+          "name": "test_result_guest_token_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "guest_token"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "test_result_user_or_guest": {
+          "name": "test_result_user_or_guest",
+          "value": "\"test_result\".\"user_id\" IS NOT NULL OR \"test_result\".\"guest_token\" IS NOT NULL"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.compatibility_kind": {
+      "name": "compatibility_kind",
+      "schema": "public",
+      "values": [
+        "compatible",
+        "challenging"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

@@ -1,5 +1,8 @@
+name: mbti_app
+
 services:
   postgres:
+    container_name: mbti_app_postgres
     image: postgres:17-alpine
     environment:
       POSTGRES_USER: mbti

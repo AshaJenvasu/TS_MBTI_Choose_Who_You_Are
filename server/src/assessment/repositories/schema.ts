@@ -7,7 +7,9 @@ import {
   pgTable,
   primaryKey,
   text,
+  timestamp,
   unique,
+  uuid,
 } from "drizzle-orm/pg-core";
 
 export const compatibilityKind = pgEnum("compatibility_kind", [
@@ -47,6 +49,31 @@ export const character = pgTable(
     description: text("description").notNull(),
   },
   (t) => [unique("character_mbti_type_unique").on(t.mbtiType)],
+);
+
+// user_id has no FK yet: the user table belongs to Identity (Epic 2, Better Auth).
+export const testResult = pgTable(
+  "test_result",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id"),
+    guestToken: uuid("guest_token").unique(),
+    mbtiType: text("mbti_type")
+      .notNull()
+      .references(() => mbtiTypeInfo.typeCode),
+    matchedCharacterId: integer("matched_character_id")
+      .notNull()
+      .references(() => character.id),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    check(
+      "test_result_user_or_guest",
+      sql`${t.userId} IS NOT NULL OR ${t.guestToken} IS NOT NULL`,
+    ),
+  ],
 );
 
 export const mbtiTypeCompatibility = pgTable(
