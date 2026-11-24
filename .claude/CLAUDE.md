@@ -13,8 +13,8 @@ BOUNDED CONTEXTS:
 - MbtiTypeInfo = ความหมาย/ของแต่ละ type (แยกจาก Character)
 - Claim = การผูกผล guest เข้ากับบัญชีที่สมัคร/login
 - ShareLink = ลิงก์สาธารณะสำหรับแชร์ผล
-  LATEST EVENT FLOW: (ยังไม่เริ่ม Round 2 — อยู่ระหว่าง Big Round)
-  CURRENT FEATURE: (ยังไม่เริ่ม Round 2 — กำลังทำ Big Round ข้อ 7: AGENTS.md/CLAUDE.md + DESIGN.md)
+  LATEST EVENT FLOW: ผู้ใช้ → SubmitAnswers → AnswersSubmitted → ResultMatched → NewResultRecorded
+  CURRENT FEATURE: ทำ Test แล้วได้ผลลัพธ์ (POST /test/submit)
 
 ## Working style
 

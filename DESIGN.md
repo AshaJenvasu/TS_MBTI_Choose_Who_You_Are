@@ -1,6 +1,7 @@
 # 🎨 Design System — TS_MBTI_Choose_Who_You_Are!
 
 ## 🧭 Style Guide (ทิศทางรวม)
+
 - ธีม: Magic Academy (อารมณ์ Harry Potter) ผสมสไตล์ anime
 - Mood: อบอุ่น มีเสน่ห์ลึกลับนิดๆ แต่**ไม่น่ากลัว** — เข้าถึงง่ายสำหรับคนทั่วไปที่ไม่ใช่ hardcore otaku
 - หลีกเลี่ยงโทนมืด/goth จ๋าเกินไป เพราะ target กว้าง ไม่ใช่แค่กลุ่ม dark fantasy fan
@@ -8,27 +9,31 @@
 ## 🎨 Color Palette
 
 ### Base / Neutral
-| Token | ค่า | ใช้ทำอะไร |
-| --- | --- | --- |
-| `--color-bg` | `#F5EFE0` (ครีมพาร์ชเมนต์) | พื้นหลังหลัก |
-| `--color-surface` | `#EDE4CF` | การ์ด/พื้นผิวที่ยกขึ้นมา |
-| `--color-text-primary` | `#2B2320` | ข้อความหลัก |
-| `--color-text-secondary` | `#6B5D4F` | ข้อความรอง/คำอธิบาย |
+
+| Token                    | ค่า                        | ใช้ทำอะไร                |
+| ------------------------ | -------------------------- | ------------------------ |
+| `--color-bg`             | `#F5EFE0` (ครีมพาร์ชเมนต์) | พื้นหลังหลัก             |
+| `--color-surface`        | `#EDE4CF`                  | การ์ด/พื้นผิวที่ยกขึ้นมา |
+| `--color-text-primary`   | `#2B2320`                  | ข้อความหลัก              |
+| `--color-text-secondary` | `#6B5D4F`                  | ข้อความรอง/คำอธิบาย      |
 
 ### Brand Accent
-| Token | ค่า | ใช้ทำอะไร |
-| --- | --- | --- |
-| `--color-primary` | `#C9A227` (ทองคำ) | ปุ่มหลัก, จุดเด่นเวทมนตร์ |
-| `--color-secondary` | `#5B3A8E` (ม่วงเวทมนตร์) | accent รอง, การ์ดพิเศษ |
+
+| Token               | ค่า                      | ใช้ทำอะไร                 |
+| ------------------- | ------------------------ | ------------------------- |
+| `--color-primary`   | `#C9A227` (ทองคำ)        | ปุ่มหลัก, จุดเด่นเวทมนตร์ |
+| `--color-secondary` | `#5B3A8E` (ม่วงเวทมนตร์) | accent รอง, การ์ดพิเศษ    |
 
 ### Semantic (สถานะ)
-| Token | ค่า | ใช้ทำอะไร |
-| --- | --- | --- |
-| `--color-success` | `#2F6B4F` | สำเร็จ |
-| `--color-error` | `#8C2F39` | error state |
-| `--color-warning` | `#C97A1A` | เตือน |
+
+| Token             | ค่า       | ใช้ทำอะไร   |
+| ----------------- | --------- | ----------- |
+| `--color-success` | `#2F6B4F` | สำเร็จ      |
+| `--color-error`   | `#8C2F39` | error state |
+| `--color-warning` | `#C97A1A` | เตือน       |
 
 ### 🏠 House Accent (สำหรับ 16 MBTI types)
+
 ⚠️ ยังไม่กำหนดสีแต่ละ type ตายตัวตอนนี้ (รอ content stage) แต่กำหนด**ระบบ**ไว้ล่วงหน้า:
 
 ```text
@@ -39,27 +44,24 @@ house_accent_color = hsl(house_accent_hue, 55%, 45%)
 → ให้สีแต่ละบ้านกระจายสม่ำเสมอ ไม่ต้องเลือกมือทีละสี ลดงานตอนทำจริง + สีไม่ซ้ำ/ไม่ใกล้กันเกินไป
 
 ## ✍️ Typography
-| Role | Font | หมายเหตุ |
-| --- | --- | --- |
-| Header/Logo (EN) | `Cinzel` (serif, fantasy) | ใช้เฉพาะคำอังกฤษสั้นๆ เช่น ชื่อบ้าน/โลโก้ |
-| Body (TH+EN) | `IBM Plex Sans Thai` | รองรับไทยเต็มรูปแบบ อ่านง่าย ไม่ใช่ font ตกแต่ง |
+
+| Role             | Font                      | หมายเหตุ                                        |
+| ---------------- | ------------------------- | ----------------------------------------------- |
+| Header/Logo (EN) | `Cinzel` (serif, fantasy) | ใช้เฉพาะคำอังกฤษสั้นๆ เช่น ชื่อบ้าน/โลโก้       |
+| Body (TH+EN)     | `IBM Plex Sans Thai`      | รองรับไทยเต็มรูปแบบ อ่านง่าย ไม่ใช่ font ตกแต่ง |
 
 ### Scale
 
 ```css
---font-size-h1: 32px
---font-size-h2: 24px
---font-size-h3: 20px
---font-size-body: 16px
---font-size-small: 14px
+--font-size-h1: 32px --font-size-h2: 24px --font-size-h3: 20px
+  --font-size-body: 16px --font-size-small: 14px;
 ```
 
 ## 📐 Spacing & Layout
 
 ```css
---space-1: 4px --space-2: 8px --space-3: 12px
---space-4: 16px --space-5: 24px --space-6: 32px
---space-7: 48px --space-8: 64px
+--space-1: 4px --space-2: 8px --space-3: 12px --space-4: 16px --space-5: 24px
+  --space-6: 32px --space-7: 48px --space-8: 64px;
 ```
 
 - Mobile-first (คนส่วนใหญ่เปิดจากลิงก์แชร์บนมือถือ) → design container max-width 480px บนมือถือ, ขยายเป็น 768px บน tablet+
@@ -67,10 +69,29 @@ house_accent_color = hsl(house_accent_hue, 55%, 45%)
 ## 🧩 Design Token (เพิ่มเติม)
 
 ```css
---radius-sm: 8px --radius-md: 12px --radius-lg: 16px // โค้งมน เป็นมิตร ไม่เหลี่ยมจัด
---shadow-magic: 0 0 24px rgba(201, 162, 39, 0.4) // เอฟเฟกต์เรืองแสงทอง ใช้ตอน gacha reveal
+--radius-sm: 8px --radius-md: 12px --radius-lg: 16px
+  // โค้งมน เป็นมิตร ไม่เหลี่ยมจัด
+  --shadow-magic: 0 0 24px rgba(201, 162, 39, 0.4); // เอฟเฟกต์เรืองแสงทอง ใช้ตอน gacha reveal
 ```
 
 ## 🗺️ Grid System
+
 - Mobile: 1 column เต็มความกว้าง, padding 16px ซ้าย-ขวา
 - Tablet/Desktop (≥768px): max-width 768px, จัดกึ่งกลางหน้าจอ
+
+## 🧭 Style Guide (อัปเดต — เพิ่มรายละเอียดจาก Mood Board)
+
+- ธีม: Magic Academy (อารมณ์ Harry Potter) ผสมสไตล์ anime
+- Mood: อบอุ่น มีเสน่ห์ลึกลับนิดๆ แต่**ไม่น่ากลัว** — เข้าถึงง่ายสำหรับคนทั่วไปที่ไม่ใช่ hardcore otaku
+- **อ้างอิงภาพ (อธิบายเป็นคำ ไม่แนบรูปจริง เพื่อหลีกเลี่ยงลิขสิทธิ์):**
+  - สถาปัตยกรรมปราสาทโบราณ, หอคอย, หินแกะสลัก
+  - องค์ประกอบลอยตัว (หนังสือ, เทียน, ของวิเศษ) เพื่อสื่อถึงเวทมนตร์
+  - แสงอุ่นโทนทอง/อำพัน (ไม่ใช่แสงฟ้า/เย็นแบบ sci-fi)
+- หลีกเลี่ยงโทนมืด/goth จ๋าเกินไป เพราะ target กว้าง ไม่ใช่แค่กลุ่ม dark fantasy fan
+
+## 🎰 Gacha Reveal Animation Spec (ใหม่)
+
+- รูปแบบ: **Card-flip reveal** (การ์ดหมุนพลิกเปิดจากด้านหลังสู่ด้านหน้า) — ไม่ใช่กล่องเปิด/ประตูเปิด
+- Effect ตอนเปิด: เรืองแสงสีทองรอบขอบการ์ด (ใช้ `--shadow-magic` token ที่มีอยู่แล้ว) + อนุภาคกระจาย (sparkle particles) จางๆรอบๆ
+- จังหวะ: หน่วงสั้นๆก่อนพลิก (build-up ~0.5-1 วิ) → พลิกเปิดเร็ว (~0.3 วิ) → ภาพตัวละครค่อยๆ fade-in ชัดขึ้น
+- สีพื้นหลังตอน reveal: มืดกว่าปกติเล็กน้อย (ใช้ `--color-surface` เข้มขึ้น ~15%) เพื่อให้การ์ดที่เรืองแสงเด่นขึ้น
