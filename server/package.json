@@ -9,11 +9,13 @@
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "bun run src/assessment/repositories/seed.ts",
     "db:setup": "bun run db:migrate && bun run db:seed",
+    "dev": "bun run src/dev.ts",
     "openapi:generate": "bun run src/generate-openapi.ts",
     "test": "vitest run"
   },
   "dependencies": {
     "@hono/zod-openapi": "^1.6.3",
+    "@scalar/hono-api-reference": "^0.12.24",
     "drizzle-orm": "^0.45.4",
     "hono": "^4.13.21",
     "pg": "^8.23.1",
