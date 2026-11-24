@@ -3,7 +3,7 @@ import {
   findCharacterAndGoldenPairByMbtiType,
   insertTestResult,
 } from "../repositories/submit-test.repository";
-import { calculateMbtiType } from "./scoring";
+import { calculateMbtiType, type Answer } from "./scoring";
 
 export type SubmitTestResult = {
   resultId: string;
@@ -21,7 +21,7 @@ export type SubmitTestResult = {
 /** Scores the answers, matches the character, and records one TestResult. */
 export async function submitTest(
   db: Db,
-  answers: readonly number[],
+  answers: readonly Answer[],
   guestToken: string,
 ): Promise<SubmitTestResult> {
   const mbtiType = calculateMbtiType(answers);

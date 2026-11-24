@@ -124,3 +124,59 @@ Tickets อยู่ที่ `.scratch/submit-test/issues/`
 ### ขั้นต่อไป
 1. รีวิวผล restructure แล้ว commit (ยังไม่ commit: ทั้ง Ticket 2 และ restructure อยู่ใน working tree)
 2. ยังไม่เริ่ม Ticket 3 จนกว่าผู้ใช้สั่ง
+
+---
+
+## Session 2026-11-24 (ต่อ) — Revision ของ Ticket 2: Likert-weighted scoring
+
+### ที่ทำ
+เปลี่ยน scoring ของ `POST /test/submit` จาก binary-count (20 ข้อ, 5 ข้อต่อ axis, เทียบค่ากลาง 15) เป็น **Likert-weighted + reverse-scored items (24 ข้อ)** เหตุผล: ผลละเอียด/สมจริงกว่า และการมีข้อ pole ตรงข้ามผสมกันทำให้ตอบ "เห็นด้วยทุกข้อ" หักล้างกันเอง (ลด response bias) รายละเอียดอยู่ใน `docs/adr/005-test-scoring-methodology.md`
+
+- `services/question-bank.ts` (ใหม่): `QUESTIONS` 24 ข้อ id 1-24 คงที่ (1-6 EI, 7-12 SN, 13-18 TF, 19-24 JP) แต่ละ axis 3 ข้อต่อ pole สลับกัน ข้อความเป็น placeholder
+- `services/scoring.ts` (เขียนใหม่): Likert 1-5 → weight −2..+2, บวกเข้าฝั่ง pole ของคำถาม, ผลต่างต่อ axis > 0 ได้ตัวแรก, < 0 ได้ตัวที่สอง, **เสมอ (0) → E/S/T/J** (มี comment อธิบายในโค้ด) response shape เดิม ไม่เพิ่ม percentage
+- `schema/submit-test.schema.ts`: `answers` เป็น `{ questionId, value 1-5 }[]` บังคับ 24 รายการ questionId ครบ ไม่ซ้ำ ไม่ขาด (`superRefine`) และ `minItems/maxItems` ใน OpenAPI
+- `controllers/submit-test.controllers.ts`: error เป็น `{ "error": { "code": "INVALID_ANSWERS", "message": "..." } }`, success ตอบ **200**
+- `services/submit-test.services.ts`: รับ `Answer[]` แทน `number[]`
+- `server/openapi.yaml` regenerate แล้ว สะท้อน schema ใหม่
+
+### จำนวน test
+- ก่อนแก้: 34 passed + 1 todo (รวม 35)
+- หลังแก้: **61 passed + 1 todo (รวม 62)**, `tsc --noEmit` ผ่าน
+  - `repositories/reference-data.test.ts` 12 (เท่าเดิม), `question-bank.test.ts` 5 (ใหม่), `scoring.test.ts` 19 (เขียนใหม่: weight 5 ระดับ, reverse-scored, tie, ชุด 24 ข้อคำนวณมือ 3 ชุด, purity), `submit-test.controllers.test.ts` 25 (AC1/AC3/AC4/OpenAPI)
+- RED: ก่อนมีโค้ด 3 suite แดงเพราะไม่มี `./question-bank`; หลังเพิ่มแค่ question-bank แดง 42 test จริงตาม behavior ก่อนเขียวทั้งหมด
+
+### สิ่งที่เปลี่ยนจาก contract เดิมของ Ticket 2 (ตามที่ผู้ใช้สั่งใน ticket นี้)
+- Success status: 201 → **200**
+- Error body: `{ "error": "INVALID_ANSWERS" }` → `{ "error": { "code", "message" } }`
+- Request `answers`: `number[]` (20) → `{ questionId, value }[]` (24)
+- section ก่อนหน้านี้ที่เขียนว่า 201/error shape เดิม คือประวัติ ณ ตอนนั้น ไม่ได้แก้
+
+### ขั้นต่อไป
+1. รีวิวแล้ว commit เอง (ยังไม่ได้ commit การแก้ครั้งนี้)
+2. ยังไม่เริ่ม GET /results/:resultId, GET /results (ticket ถัดไป)
+3. Known gap เดิมยังอยู่: rate limiting (OWASP API4) ก่อน production
+
+### Follow-up fix (ต่อท้าย section Revision ด้านบน)
+สิ่งที่แก้เพิ่ม (ข้อความด้านบนที่เขียนว่า 200 และสัดส่วน 3:3 คือประวัติ ณ ตอนนั้น ถูกแทนที่ด้วยรายการนี้):
+1. Success status กลับเป็น **201** (controller + test + `openapi.yaml` regenerate แล้ว)
+2. Audit error shape ทั้ง `src/assessment/`: ไม่พบ flat string `{ error: "XXX" }` เหลือ — ใช้ nested `{ error: { code, message } }` ทั้งหมด (ผ่าน `invalidAnswers()` ใน controller จุดเดียวใช้ 2 ที่ + `InvalidAnswersResponse` ใน schema) ข้อสังเกต: 500 ยังตอบ text ธรรมดา `Internal Server Error` (ยังไม่ได้กำหนด shape)
+3. `question-bank.ts` เปลี่ยนเป็น **4:2 ต่อ axis** (ตำแหน่ง 1,3,4,6 = ตัวอักษรหลัก E/S/T/J; ตำแหน่ง 2,5 = ตัวอักษรรอง I/N/F/P) id 1-24 คงเดิม
+   - ตอบ 5 ทุกข้อ → net +4 ทุก axis → ESTJ, ตอบ 1 ทุกข้อ → net −4 ทุก axis → INFP (ไม่เสมอแล้ว), ตอบ 3 ทุกข้อ → net 0 → fallback ESTJ (ตั้งใจ)
+   - หมายเหตุ: ตอบ 1 ทุกข้อ ฝั่งที่ชนะคือตัวอักษรรอง (I/N/F/P) ไม่ใช่ฝั่ง 4 ข้อ เพราะน้ำหนักรวมของฝั่ง 4 ข้อติดลบมากกว่า
+4. `scoring.ts` เพิ่ม `scoreAxes()` (single pass, export สำหรับ test เช็ค net ต่อ axis) แล้วให้ `calculateMbtiType` เรียกใช้
+5. Test: คำนวณมือใหม่ทั้งหมดสำหรับ 3 ชุดเดิม ผลเปลี่ยนเป็น ENFP / ISTJ / ESTJ (ชุด 2-3 เสมอ 3 axis เพราะตัวเลขเดิมไม่เหมาะกับ layout ใหม่) จึงเพิ่มชุดใหม่ที่ตัดสินได้ทุก axis อีก 2 ชุด (ISFP, ENTJ) พร้อม assert net ต่อ axis เพิ่ม test 5/1/3 ทุกข้อ และ test สัดส่วน 4:2 ของ question bank
+6. ADR-005 แก้แล้ว: ลบ known limitation เดิม, เขียนว่า 4:2 แก้ all-agree/all-disagree, all-neutral fallback เป็นพฤติกรรมที่ตั้งใจ
+7. เช็คโครงสร้างข้อมูลย้อนหลัง: lookup คำถามใช้ `Map<id, Question>` (ทำไว้แล้ว), validate id ครบ/ไม่ซ้ำใช้ `Set` + loop เดียว (ทำไว้แล้ว), รวมคะแนนทุก axis ใน loop เดียว (ทำไว้แล้ว) — ไม่ต้องแก้
+
+ผล: test **64 passed + 1 todo (รวม 65)** (ก่อนหน้า 61 + 1 todo), `tsc --noEmit` ผ่าน ยังไม่ได้ commit
+
+### Fix 2 จุดสุดท้ายก่อนปิด Ticket 2 (ต่อท้าย section Follow-up fix)
+- Response 500 ทั้งแอปเป็น `{ "error": { "code": "INTERNAL_SERVER_ERROR", "message": "An unexpected error occurred" } }` แล้ว (เดิมเป็น text `Internal Server Error`)
+  - `server/src/errors.ts` (ใหม่): `globalErrorHandler` — HTTPException คง response เดิม, error อื่น log ฝั่ง server แล้วตอบ JSON 500 โดยไม่ส่ง message จริงให้ client
+  - `server/src/app.ts`: `app.onError(globalErrorHandler)` ครอบทุก route
+  - `submit-test.controllers.ts`: router มี `onError` ของตัวเอง (map JSON พัง → 400 `INVALID_ANSWERS`) ที่เหลือส่งต่อให้ `globalErrorHandler` เพราะ Hono ส่ง error ของ sub-app ไปที่ handler ของ sub-app ก่อน
+  - `server/src/app.test.ts` (ใหม่, 4 test): DB ที่ throw ตอน submit → 500 nested JSON ไม่หลุด error จริง, route อื่น (sync throw), async rejection, และ validation ยังเป็น 400 ไม่ใช่ 500
+  - RED ก่อนแก้: 3 test แดง (`text/plain` / ไม่ใช่ JSON)
+- ผลสุดท้าย: test **68 passed + 1 todo (รวม 69)** ใน 5 test files, `tsc --noEmit` exit code 0 — ยังไม่ได้ commit
+- ยังไม่ได้ทำ: ใส่ response 500 ใน OpenAPI spec ของ `POST /test/submit`
+- (อัปเดตต่อ) ใส่ response 500 ใน OpenAPI แล้ว: schema กลาง `InternalServerErrorResponse` อยู่ใน `server/src/errors.ts` (route อื่นใช้ใน `responses[500]` ได้) และ `POST /test/submit` อ้างถึงแล้ว; `openapi.yaml` diff มีแค่ schema ใหม่ + response `"500"` ไม่มี behavior เปลี่ยน; test **69 passed + 1 todo (รวม 70)**, `tsc --noEmit` exit code 0 — ข้อ "ยังไม่ได้ทำ" ด้านบนจึงเสร็จแล้ว

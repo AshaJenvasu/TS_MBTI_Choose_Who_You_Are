@@ -2,6 +2,7 @@ import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import pg from "pg";
 import { createApp, OPENAPI_CONFIG } from "../../app";
 import { createDb } from "../../db/client";
+import { QUESTIONS } from "../services/question-bank";
 
 // Real Postgres (docker compose) with migration + seed applied: `bun run db:setup`.
 const url =
@@ -13,16 +14,18 @@ const app = createApp(db);
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
-const ENFP_ANSWERS = [
-  ...Array<number>(5).fill(5),
-  ...Array<number>(15).fill(1),
-];
-const ISTJ_ANSWERS = [
-  ...Array<number>(5).fill(1),
-  ...Array<number>(5).fill(5),
-  ...Array<number>(5).fill(5),
-  ...Array<number>(5).fill(5),
-];
+/**
+ * Answers that push every axis toward `type`: agree strongly (5) with items whose
+ * pole is in the type, disagree strongly (1) with the rest. Both add +2 toward the type.
+ */
+const answersFor = (type: string) =>
+  QUESTIONS.map((q) => ({
+    questionId: q.id,
+    value: type.includes(q.pole) ? 5 : 1,
+  }));
+
+const ENFP_ANSWERS = answersFor("ENFP");
+const ISTJ_ANSWERS = answersFor("ISTJ");
 
 const submit = (body: unknown) =>
   app.request("/test/submit", {
@@ -102,6 +105,13 @@ describe("POST /test/submit — AC1 guest submit succeeds", () => {
     expect(rows[0].char_type).toBe("ENFP");
     expect(rows[0].created_at).toBeInstanceOf(Date);
   });
+
+  it("accepts the 24 answers in any order", async () => {
+    const body = await (
+      await submit({ answers: [...ENFP_ANSWERS].reverse() })
+    ).json();
+    expect(body.mbtiType).toBe("ENFP");
+  });
 });
 
 // AC2 (logged-in submit, no guestToken) is out of scope for this ticket:
@@ -111,23 +121,43 @@ describe.skip("POST /test/submit — AC2 logged-in submit (Epic 2)", () => {
 });
 
 describe("POST /test/submit — AC3 invalid answers", () => {
+  const valid = ENFP_ANSWERS;
+  const withFirst = (patch: object) => [{ ...valid[0], ...patch }, ...valid.slice(1)];
+
   const cases: Array<[string, unknown]> = [
-    ["fewer than 20 answers", { answers: ENFP_ANSWERS.slice(0, 19) }],
-    ["more than 20 answers", { answers: [...ENFP_ANSWERS, 3] }],
+    ["fewer than 24 answers", { answers: valid.slice(0, 23) }],
+    ["more than 24 answers", { answers: [...valid, { questionId: 1, value: 3 }] }],
     ["empty answers", { answers: [] }],
-    ["value below 1", { answers: [0, ...ENFP_ANSWERS.slice(1)] }],
-    ["value above 5", { answers: [6, ...ENFP_ANSWERS.slice(1)] }],
-    ["non-integer value", { answers: [3.5, ...ENFP_ANSWERS.slice(1)] }],
-    ["string value", { answers: ["5", ...ENFP_ANSWERS.slice(1)] }],
+    [
+      "duplicate questionId (24 items, id 24 replaced by id 1)",
+      { answers: [...valid.slice(0, 23), { questionId: 1, value: 3 }] },
+    ],
+    [
+      "questionId not in QUESTIONS (25)",
+      { answers: [...valid.slice(0, 23), { questionId: 25, value: 3 }] },
+    ],
+    ["questionId 0", { answers: withFirst({ questionId: 0 }) }],
+    ["non-integer questionId", { answers: withFirst({ questionId: 1.5 }) }],
+    ["value below 1", { answers: withFirst({ value: 0 }) }],
+    ["value above 5", { answers: withFirst({ value: 6 }) }],
+    ["non-integer value", { answers: withFirst({ value: 3.5 }) }],
+    ["string value", { answers: withFirst({ value: "5" }) }],
+    ["missing value", { answers: withFirst({ value: undefined }) }],
+    ["old format: plain numbers", { answers: Array<number>(24).fill(3) }],
     ["answers missing", {}],
-    ["answers not an array", { answers: "11111111111111111111" }],
+    ["answers not an array", { answers: "nope" }],
     ["malformed JSON", "{ not json"],
   ];
 
   it.each(cases)("%s → 400 INVALID_ANSWERS and no row saved", async (_n, body) => {
     const res = await submit(body);
     expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({ error: "INVALID_ANSWERS" });
+
+    const json = await res.json();
+    expect(json.error.code).toBe("INVALID_ANSWERS");
+    expect(typeof json.error.message).toBe("string");
+    expect(json.error.message.length).toBeGreaterThan(0);
+    expect(Object.keys(json)).toEqual(["error"]);
     expect(await countResults()).toBe(0);
   });
 });
@@ -155,8 +185,56 @@ describe("POST /test/submit — AC4 deterministic result", () => {
 });
 
 describe("OpenAPI document", () => {
+  const doc = app.getOpenAPIDocument(OPENAPI_CONFIG);
+
   it("describes POST /test/submit", () => {
-    const doc = app.getOpenAPIDocument(OPENAPI_CONFIG);
     expect(doc.paths["/test/submit"]?.post).toBeDefined();
+  });
+
+  it("documents the 24 { questionId, value } answers", () => {
+    const schemas = doc.components?.schemas as Record<string, any>;
+    const answers = schemas.SubmitTestRequest.properties.answers;
+    expect(answers.minItems).toBe(24);
+    expect(answers.maxItems).toBe(24);
+    expect(Object.keys(answers.items.properties).sort()).toEqual([
+      "questionId",
+      "value",
+    ]);
+    expect(answers.items.properties.value.minimum).toBe(1);
+    expect(answers.items.properties.value.maximum).toBe(5);
+  });
+
+  it("gives docs UIs (Scalar) a valid example body: 24 unique ids, accepted by the API", async () => {
+    const schemas = doc.components?.schemas as Record<string, any>;
+    const example = schemas.SubmitTestRequest.properties.answers.example;
+
+    expect(example).toHaveLength(24);
+    expect(example.map((a: any) => a.questionId)).toEqual(
+      QUESTIONS.map((q) => q.id),
+    );
+
+    const res = await submit({ answers: example });
+    expect(res.status).toBe(201);
+  });
+
+  it("documents the error shape { error: { code, message } }", () => {
+    const schemas = doc.components?.schemas as Record<string, any>;
+    const error = schemas.InvalidAnswersResponse.properties.error;
+    expect(Object.keys(error.properties).sort()).toEqual(["code", "message"]);
+  });
+
+  it("documents the 500 response with the shared INTERNAL_SERVER_ERROR shape", () => {
+    const responses = doc.paths["/test/submit"]!.post!.responses as Record<string, any>;
+    expect(Object.keys(responses).sort()).toEqual(["201", "400", "500"]);
+    expect(responses["500"].content["application/json"].schema.$ref).toBe(
+      "#/components/schemas/InternalServerErrorResponse",
+    );
+
+    const schemas = doc.components?.schemas as Record<string, any>;
+    const error = schemas.InternalServerErrorResponse.properties.error;
+    expect(Object.keys(error.properties).sort()).toEqual(["code", "message"]);
+    expect(error.properties.code.enum).toEqual(["INTERNAL_SERVER_ERROR"]);
+    expect(error.properties.message.type).toBe("string");
+    expect(schemas.InternalServerErrorResponse.required).toEqual(["error"]);
   });
 });

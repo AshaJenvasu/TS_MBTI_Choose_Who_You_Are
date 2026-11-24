@@ -16,7 +16,6 @@ ADR-001 เลือก Modular Monolith และกำหนดให้แย
 ```text
 server/src/
 ├── app.ts                  # Hono app bootstrap (ใช้ร่วมข้าม context)
-├── generate-openapi.ts     # สร้าง openapi.yaml (ใช้ร่วมข้าม context)
 ├── db/client.ts            # DB client (ใช้ร่วมข้าม context)
 └── assessment/             # Bounded Context
     ├── controllers/        # *.controllers.ts  — Hono route + createRoute
@@ -27,7 +26,7 @@ server/src/
 
 - `repositories/schema.ts` = Drizzle ORM table definitions
 - `schema/*.schema.ts` = Zod validation schema (คนละความหมายกัน แยกตามโฟลเดอร์)
-- โค้ดที่ใช้ร่วมข้าม context (`app.ts`, `db/client.ts`, `generate-openapi.ts`), `openapi.yaml` และ `drizzle/` (migration) อยู่นอก context folder
+- โค้ดที่ใช้ร่วมข้าม context (`app.ts`, `db/client.ts`) และ `drizzle/` (migration) อยู่นอก context folder
 - Context ใหม่ (`identity/`, `sharing/`) ใช้โครงเดียวกัน และ import direction ยังต้องเป็นไปตาม Context Map ใน ADR-001
 
 ## Consequences
