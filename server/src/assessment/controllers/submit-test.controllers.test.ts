@@ -76,8 +76,10 @@ describe("POST /test/submit — AC1 guest submit succeeds", () => {
   it("returns the character stored for that type in the reference data", async () => {
     const body = await (await submit({ answers: ENFP_ANSWERS })).json();
     const { rows } = await pool.query(
-      `select name, house, image_url, description from "character"
-       where mbti_type = 'ENFP'`,
+      // house now lives on mbti_type_info; the submit response keeps character.house.
+      `select c.name, i.house, c.image_url, c.description
+       from "character" c join mbti_type_info i on i.type_code = c.mbti_type
+       where c.mbti_type = 'ENFP'`,
     );
     expect(body.character).toEqual({
       name: rows[0].name,

@@ -1,4 +1,5 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
+import { createGetResultRoutes } from "./assessment/controllers/get-result.controllers";
 import { createSubmitTestRoutes } from "./assessment/controllers/submit-test.controllers";
 import type { Db } from "./db/client";
 import { globalErrorHandler } from "./errors";
@@ -12,5 +13,6 @@ export function createApp(db: Db) {
   const app = new OpenAPIHono();
   app.onError(globalErrorHandler);
   app.route("/", createSubmitTestRoutes(db));
+  app.route("/", createGetResultRoutes(db));
   return app;
 }

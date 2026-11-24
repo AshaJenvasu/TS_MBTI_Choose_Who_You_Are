@@ -2,30 +2,32 @@
 // Real names/descriptions/compatibility content arrive in the content stage.
 
 // TODO: placeholder logic ชั่วคราว รอ content design จริงของ MBTI 16 type ในอนาคต
-/** Each type with its golden pair (the type with first and last letter flipped). */
+/**
+ * Each type with its golden pair (the type with first and last letter flipped)
+ * and its house (one house per type; placeholder names).
+ */
 export const MBTI_TYPES = [
-  { typeCode: "INFJ", goldenPairType: "ENFP" },
-  { typeCode: "INFP", goldenPairType: "ENFJ" },
-  { typeCode: "INTJ", goldenPairType: "ENTP" },
-  { typeCode: "INTP", goldenPairType: "ENTJ" },
-  { typeCode: "ISFJ", goldenPairType: "ESFP" },
-  { typeCode: "ISFP", goldenPairType: "ESFJ" },
-  { typeCode: "ISTJ", goldenPairType: "ESTP" },
-  { typeCode: "ISTP", goldenPairType: "ESTJ" },
-  { typeCode: "ENFJ", goldenPairType: "INFP" },
-  { typeCode: "ENFP", goldenPairType: "INFJ" },
-  { typeCode: "ENTJ", goldenPairType: "INTP" },
-  { typeCode: "ENTP", goldenPairType: "INTJ" },
-  { typeCode: "ESFJ", goldenPairType: "ISFP" },
-  { typeCode: "ESFP", goldenPairType: "ISFJ" },
-  { typeCode: "ESTJ", goldenPairType: "ISTP" },
-  { typeCode: "ESTP", goldenPairType: "ISTJ" },
+  { typeCode: "INFJ", goldenPairType: "ENFP", house: "House INFJ Placeholder" },
+  { typeCode: "INFP", goldenPairType: "ENFJ", house: "House INFP Placeholder" },
+  { typeCode: "INTJ", goldenPairType: "ENTP", house: "House INTJ Placeholder" },
+  { typeCode: "INTP", goldenPairType: "ENTJ", house: "House INTP Placeholder" },
+  { typeCode: "ISFJ", goldenPairType: "ESFP", house: "House ISFJ Placeholder" },
+  { typeCode: "ISFP", goldenPairType: "ESFJ", house: "House ISFP Placeholder" },
+  { typeCode: "ISTJ", goldenPairType: "ESTP", house: "House ISTJ Placeholder" },
+  { typeCode: "ISTP", goldenPairType: "ESTJ", house: "House ISTP Placeholder" },
+  { typeCode: "ENFJ", goldenPairType: "INFP", house: "House ENFJ Placeholder" },
+  { typeCode: "ENFP", goldenPairType: "INFJ", house: "House ENFP Placeholder" },
+  { typeCode: "ENTJ", goldenPairType: "INTP", house: "House ENTJ Placeholder" },
+  { typeCode: "ENTP", goldenPairType: "INTJ", house: "House ENTP Placeholder" },
+  { typeCode: "ESFJ", goldenPairType: "ISFP", house: "House ESFJ Placeholder" },
+  { typeCode: "ESFP", goldenPairType: "ISFJ", house: "House ESFP Placeholder" },
+  { typeCode: "ESTJ", goldenPairType: "ISTP", house: "House ESTJ Placeholder" },
+  { typeCode: "ESTP", goldenPairType: "ISTJ", house: "House ESTP Placeholder" },
 ] as const;
 
 export const CHARACTERS = MBTI_TYPES.map(({ typeCode }) => ({
   mbtiType: typeCode,
   name: `Type ${typeCode} Placeholder`,
-  house: `House ${typeCode} Placeholder`,
   imageUrl: `/placeholder/${typeCode.toLowerCase()}.png`,
   description: `Type ${typeCode} Placeholder description`,
 }));

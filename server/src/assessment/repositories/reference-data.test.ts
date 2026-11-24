@@ -43,6 +43,24 @@ describe("MbtiTypeInfo reference data", () => {
   });
 });
 
+describe("house lives on MbtiTypeInfo, not on Character", () => {
+  it("every type has a non-empty house", async () => {
+    const [r] = await rows<{ n: number }>(
+      `select count(*)::int as n from mbti_type_info
+       where house is not null and house <> ''`,
+    );
+    expect(r?.n).toBe(16);
+  });
+
+  it("mbti_type_info has the house column and character no longer does", async () => {
+    const cols = await rows<{ table_name: string }>(
+      `select table_name from information_schema.columns
+       where column_name = 'house' and table_name in ('mbti_type_info', 'character')`,
+    );
+    expect(cols.map((c) => c.table_name)).toEqual(["mbti_type_info"]);
+  });
+});
+
 describe("Character reference data", () => {
   it("has 16 rows, exactly one per MBTI type", async () => {
     const [r] = await rows<{ n: number; types: number }>(

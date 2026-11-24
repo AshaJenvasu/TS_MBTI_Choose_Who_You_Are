@@ -11,7 +11,7 @@ export async function findCharacterAndGoldenPairByMbtiType(
     .select({
       characterId: character.id,
       name: character.name,
-      house: character.house,
+      house: mbtiTypeInfo.house,
       imageUrl: character.imageUrl,
       description: character.description,
       goldenPairType: mbtiTypeInfo.goldenPairType,

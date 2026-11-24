@@ -22,6 +22,7 @@ export const mbtiTypeInfo = pgTable(
   {
     typeCode: text("type_code").primaryKey(),
     goldenPairType: text("golden_pair_type").notNull(),
+    house: text("house").notNull(),
   },
   (t) => [
     foreignKey({
@@ -44,7 +45,6 @@ export const character = pgTable(
       .notNull()
       .references(() => mbtiTypeInfo.typeCode),
     name: text("name").notNull(),
-    house: text("house").notNull(),
     imageUrl: text("image_url").notNull(),
     description: text("description").notNull(),
   },
