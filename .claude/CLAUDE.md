@@ -13,8 +13,8 @@ BOUNDED CONTEXTS:
 - MbtiTypeInfo = ความหมาย/ของแต่ละ type (แยกจาก Character)
 - Claim = การผูกผล guest เข้ากับบัญชีที่สมัคร/login
 - ShareLink = ลิงก์สาธารณะสำหรับแชร์ผล
-  LATEST EVENT FLOW: User → RequestProtectedRoute (requireAuth) → SessionValidated → GET /api/me → MeViewed | no/invalid session → Unauthorized (401)
-  CURRENT FEATURE: Epic 1 Ticket 4 — GET /results (list) — next up after A2 (session middleware)
+  LATEST EVENT FLOW: User → ViewHistory (GET /results, requireAuth) → SessionValidated → HistoryViewed (own results only, newest first; [] if none) | no/invalid session → Unauthorized (401)
+  CURRENT FEATURE: Epic 2 Feature B, Ticket B1 — claim guest result — next up
 
 ## Working style
 
