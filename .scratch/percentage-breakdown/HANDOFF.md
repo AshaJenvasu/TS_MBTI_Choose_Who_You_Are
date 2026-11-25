@@ -3,7 +3,7 @@
 ## Session 2026-11-25 — Epic 1 Ticket 5: Percentage Breakdown
 
 ### สถานะ
-- โค้ด + tests เสร็จ ยังไม่ commit
+- โค้ด + tests เสร็จ, commit แล้ว (`5682134`)
 - Tests: 170 passed + 1 todo (10 files). `tsc --noEmit` ผ่าน, `bun run lint:deps` 0 violations
 - Migration `server/drizzle/0005_sticky_zaladane.sql` apply กับ local DB แล้ว
 
@@ -60,6 +60,15 @@ return 50 + roundedOffset;                      // จำนวนเต็ม 0
   - submit เก็บ SN ลง `ei_score` → fail 3
 - หมายเหตุ: test boundary 3 ตัว (-12/0/+12) อย่างเดียวจับ "ลืม `Math.round`" **ไม่ได้** เพราะ 3 ค่านี้คำนวณออกมาเป็นจำนวนเต็มพอดีอยู่แล้ว — ตัวที่จับได้คือ test ครบ 25 ค่า + `Number.isInteger`
 
+### เรื่องค้าง (พบหลังปิด ticket, ยังไม่มี ticket รับ)
+- **Straight-lining (กดค่าเดิมทุกข้อ)**: ตอนนี้ไม่มีอะไรกัน backend รับทุกชุดที่ valid
+  - ทุกข้อ 3 → net 0 ทุกแกน → ESTJ 50/50/50/50 (tie → E/S/T/J เงียบๆ)
+  - ทุกข้อ 5 → net +4 ทุกแกน → ESTJ 67 ทุกแกน; ทุกข้อ 1 → net -4 → INFP 33
+  - ต้นเหตุที่ 5/1 ไม่ได้ 50: keying แต่ละแกนเป็น 4:2 (4 ข้อชี้ตัวอักษรแรก, 2 ข้อชี้ตัวที่สอง) → คนตอบ "เห็นด้วย" ทุกข้อถูกดันไป E/S/T/J (acquiescence bias)
+  - แนวทางที่คุยไว้ (user ยังไม่ตัดสินใจ, "ค่อยว่ากัน"): (2) flag `lowConfidence` ใน response เมื่อตอบค่าเดียวทั้งหมด / 3 เกินครึ่ง / มีแกน net 0 — ไม่บล็อก; คู่กับ (1) ปรับ question bank เป็น 3:3 ต่อแกน. ทางอื่น: 422 ถ้าตอบเหมือนกันทั้ง 24 ข้อ, ตัดตัวเลือกกลาง (4/6 ระดับ), UX ฝั่ง frontend
+- **ตาราง `character` ยังเป็น placeholder** ทั้ง 16 แถว (`Type INFJ Placeholder`, `/placeholder/infj.png`, ...) — ยังไม่มีชื่อ/รูป/คำอธิบายจริง และไม่มีไฟล์รูป แก้ที่ข้อมูล seed แล้ว `bun run db:seed`
+- **หลัง migrate ต้อง restart dev server**: `bun run dev` ไม่มี `--watch` — server เก่า (เริ่มก่อน Ticket 5) insert `test_result` โดยไม่ใส่ `ei_score..jp_score` → NOT NULL violation → `POST /test/submit` ได้ 500 ใน Scalar. Restart แล้วหาย
+
 ### ขั้นต่อไป
-1. Review + commit ticket นี้
-2. Epic 2 Feature B (B1 claim) ตาม CLAUDE.md
+1. Epic 2 Feature B (B1 claim) ตาม CLAUDE.md
+2. ตัดสินใจเรื่อง straight-lining ข้างบน (ticket แยก)
