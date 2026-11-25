@@ -1,5 +1,6 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { createGetResultRoutes } from "./assessment/controllers/get-result.controllers";
+import { createListResultsRoutes } from "./assessment/controllers/list-results.controllers";
 import { createSubmitTestRoutes } from "./assessment/controllers/submit-test.controllers";
 import type { Db } from "./db/client";
 import { globalErrorHandler } from "./errors";
@@ -19,6 +20,7 @@ export function createApp(db: Db, auth?: Auth) {
   if (auth) {
     app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
     app.route("/", createMeRoutes(auth));
+    app.route("/", createListResultsRoutes(db, auth));
   }
   app.route("/", createSubmitTestRoutes(db));
   app.route("/", createGetResultRoutes(db));
