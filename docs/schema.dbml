@@ -39,6 +39,10 @@ table test_result {
   mbti_type text [not null]
   matched_character_id integer [not null]
   created_at "timestamp with time zone" [not null, default: `now()`]
+  ei_score integer [not null]
+  sn_score integer [not null]
+  tf_score integer [not null]
+  jp_score integer [not null]
 }
 
 table account {

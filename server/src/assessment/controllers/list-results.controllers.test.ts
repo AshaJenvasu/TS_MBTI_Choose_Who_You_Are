@@ -71,8 +71,10 @@ async function insertResult(opts: {
   createdAt: string;
 }) {
   const { rows } = await pool.query<{ id: string }>(
-    `insert into test_result (user_id, guest_token, mbti_type, matched_character_id, created_at)
-     select $1, case when $1::text is null then gen_random_uuid() end, c.mbti_type, c.id, $3
+    `insert into test_result (user_id, guest_token, mbti_type, matched_character_id, created_at,
+                              ei_score, sn_score, tf_score, jp_score)
+     select $1, case when $1::text is null then gen_random_uuid() end, c.mbti_type, c.id, $3,
+            0, 0, 0, 0
        from "character" c where c.mbti_type = $2
      returning id`,
     [opts.userId, opts.mbtiType, opts.createdAt],

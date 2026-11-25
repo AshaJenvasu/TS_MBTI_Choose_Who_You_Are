@@ -1,4 +1,5 @@
 import { z } from "@hono/zod-openapi";
+import { BreakdownSchema } from "./breakdown.schema";
 
 export const GetResultParams = z.object({
   resultId: z.uuid().openapi({
@@ -29,6 +30,7 @@ export const GetResultResponse = z
     }),
     compatibleTypes: z.array(z.string().length(4)),
     challengingTypes: z.array(z.string().length(4)),
+    breakdown: BreakdownSchema,
   })
   .openapi("GetResultResponse");
 

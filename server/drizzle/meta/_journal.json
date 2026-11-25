@@ -36,6 +36,13 @@
       "when": 1795568636723,
       "tag": "0004_tired_kid_colt",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795581435313,
+      "tag": "0005_sticky_zaladane",
+      "breakpoints": true
     }
   ]
 }

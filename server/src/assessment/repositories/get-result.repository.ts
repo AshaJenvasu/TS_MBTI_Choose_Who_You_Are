@@ -18,6 +18,10 @@ export async function findResultWithTypeInfoById(db: Db, resultId: string) {
       characterDescription: character.description,
       house: mbtiTypeInfo.house,
       goldenPairType: mbtiTypeInfo.goldenPairType,
+      eiScore: testResult.eiScore,
+      snScore: testResult.snScore,
+      tfScore: testResult.tfScore,
+      jpScore: testResult.jpScore,
     })
     .from(testResult)
     .innerJoin(character, eq(character.id, testResult.matchedCharacterId))

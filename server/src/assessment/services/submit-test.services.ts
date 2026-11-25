@@ -3,7 +3,8 @@ import {
   findCharacterAndGoldenPairByMbtiType,
   insertTestResult,
 } from "../repositories/submit-test.repository";
-import { calculateMbtiType, type Answer } from "./scoring";
+import { type Breakdown, toBreakdown } from "./breakdown";
+import { mbtiTypeFromNet, scoreAxes, type Answer } from "./scoring";
 
 export type SubmitTestResult = {
   resultId: string;
@@ -16,6 +17,7 @@ export type SubmitTestResult = {
     description: string;
   };
   goldenPairType: string;
+  breakdown: Breakdown;
 };
 
 /** Scores the answers, matches the character, and records one TestResult. */
@@ -24,7 +26,9 @@ export async function submitTest(
   answers: readonly Answer[],
   guestToken: string,
 ): Promise<SubmitTestResult> {
-  const mbtiType = calculateMbtiType(answers);
+  // Score once: the same net scores give the type, the breakdown and the stored columns.
+  const net = scoreAxes(answers);
+  const mbtiType = mbtiTypeFromNet(net);
 
   const matched = await findCharacterAndGoldenPairByMbtiType(db, mbtiType);
 
@@ -39,6 +43,10 @@ export async function submitTest(
     guestToken,
     mbtiType,
     matchedCharacterId: matched.characterId,
+    eiScore: net.EI,
+    snScore: net.SN,
+    tfScore: net.TF,
+    jpScore: net.JP,
   });
 
   return {
@@ -52,5 +60,6 @@ export async function submitTest(
       description: matched.description,
     },
     goldenPairType: matched.goldenPairType,
+    breakdown: toBreakdown(net),
   };
 }

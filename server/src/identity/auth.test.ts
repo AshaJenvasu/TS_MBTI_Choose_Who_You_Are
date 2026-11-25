@@ -256,8 +256,9 @@ describe("Google sign-in — AC4 user cancels on Google's consent screen", () =>
 describe("Schema — AC5 test_result.user_id references Identity's user table", () => {
   const insertResult = (userId: string) =>
     pool.query(
-      `insert into test_result (user_id, mbti_type, matched_character_id)
-       select $1, c.mbti_type, c.id from "character" c where c.mbti_type = 'ENFP'`,
+      `insert into test_result (user_id, mbti_type, matched_character_id,
+                                ei_score, sn_score, tf_score, jp_score)
+       select $1, c.mbti_type, c.id, 0, 0, 0, 0 from "character" c where c.mbti_type = 'ENFP'`,
       [userId],
     );
 

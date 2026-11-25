@@ -27,6 +27,11 @@ export type NewTestResult = {
   guestToken: string | null;
   mbtiType: string;
   matchedCharacterId: number;
+  /** Net axis scores from scoreAxes(), -12..+12 each. */
+  eiScore: number;
+  snScore: number;
+  tfScore: number;
+  jpScore: number;
 };
 
 /** Inserts one test_result row and returns its generated id. */

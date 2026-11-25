@@ -55,6 +55,7 @@ describe("POST /test/submit — AC1 guest submit succeeds", () => {
 
     const body = await res.json();
     expect(Object.keys(body).sort()).toEqual([
+      "breakdown",
       "character",
       "goldenPairType",
       "guestToken",
@@ -238,5 +239,142 @@ describe("OpenAPI document", () => {
     expect(error.properties.code.enum).toEqual(["INTERNAL_SERVER_ERROR"]);
     expect(error.properties.message.type).toBe("string");
     expect(schemas.InternalServerErrorResponse.required).toEqual(["error"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Ticket 5 — percentage breakdown
+// ---------------------------------------------------------------------------
+
+/**
+ * Hand-computed set (same as scoring.test.ts "set 5"): net { EI: 7, SN: -9, TF: 5, JP: 7 } → ENTJ.
+ * % of first letter = 50 + round-half-away-from-50(net / 24 * 100):
+ *   EI  +7 → 50 + 29.17 → 79    SN  -9 → 50 - 37.5 → 12    TF  +5 → 50 + 20.83 → 71    JP  +7 → 79
+ */
+const ENTJ_HAND_SET = [
+  [5, 2, 4, 3, 1, 4],
+  [1, 4, 2, 2, 5, 1],
+  [4, 3, 5, 3, 2, 4],
+  [5, 1, 4, 4, 2, 3],
+]
+  .flat()
+  .map((value, i) => ({ questionId: i + 1, value }));
+const ENTJ_HAND_NET = { ei_score: 7, sn_score: -9, tf_score: 5, jp_score: 7 };
+const ENTJ_HAND_BREAKDOWN = { ei: 79, sn: 12, tf: 71, jp: 79 };
+
+const storedScores = async (resultId: string) =>
+  (
+    await pool.query(
+      `select ei_score, sn_score, tf_score, jp_score from test_result where id = $1`,
+      [resultId],
+    )
+  ).rows[0];
+
+describe("Ticket 5 — AC1 submit returns the % breakdown", () => {
+  it("breakdown matches the hand-computed % of each first letter", async () => {
+    const res = await submit({ answers: ENTJ_HAND_SET });
+    expect(res.status).toBe(201);
+    const body = await res.json();
+
+    expect(body.mbtiType).toBe("ENTJ");
+    expect(body.breakdown).toEqual(ENTJ_HAND_BREAKDOWN);
+  });
+
+  it("extreme answers give 0/100 on every axis, as integers", async () => {
+    const enfp = await (await submit({ answers: ENFP_ANSWERS })).json();
+    const istj = await (await submit({ answers: ISTJ_ANSWERS })).json();
+
+    // ENFP: E fully (100), N fully (S 0), F fully (T 0), P fully (J 0).
+    expect(enfp.breakdown).toEqual({ ei: 100, sn: 0, tf: 0, jp: 0 });
+    expect(istj.breakdown).toEqual({ ei: 0, sn: 100, tf: 100, jp: 100 });
+  });
+});
+
+describe("Ticket 5 — AC2 net scores are stored", () => {
+  it("the 4 columns hold exactly the net scores of the answers", async () => {
+    const { resultId } = await (await submit({ answers: ENTJ_HAND_SET })).json();
+
+    expect(await storedScores(resultId)).toEqual(ENTJ_HAND_NET);
+  });
+
+  it("extremes are stored as ±12", async () => {
+    const { resultId } = await (await submit({ answers: ENFP_ANSWERS })).json();
+
+    expect(await storedScores(resultId)).toEqual({
+      ei_score: 12,
+      sn_score: -12,
+      tf_score: -12,
+      jp_score: -12,
+    });
+  });
+
+  it("columns are NOT NULL and CHECK-limited to -12..+12 in the DB itself", async () => {
+    const insert = (scores: [number | null, number, number, number]) =>
+      pool.query(
+        `insert into test_result (guest_token, mbti_type, matched_character_id,
+                                  ei_score, sn_score, tf_score, jp_score)
+         select gen_random_uuid(), c.mbti_type, c.id, $1, $2, $3, $4
+           from "character" c where c.mbti_type = 'ENFP'`,
+        scores,
+      );
+
+    await expect(insert([13, 0, 0, 0])).rejects.toMatchObject({
+      code: "23514",
+      constraint: "test_result_ei_score_range",
+    });
+    await expect(insert([-13, 0, 0, 0])).rejects.toMatchObject({
+      code: "23514",
+      constraint: "test_result_ei_score_range",
+    });
+    await expect(insert([null, 0, 0, 0])).rejects.toMatchObject({
+      code: "23502",
+      column: "ei_score",
+    });
+    await expect(insert([12, -12, 0, 0])).resolves.toMatchObject({ rowCount: 1 });
+  });
+});
+
+describe("Ticket 5 — AC3 GET /results/:resultId shows the same breakdown later", () => {
+  it("detail breakdown equals the submit breakdown exactly", async () => {
+    const submitted = await (await submit({ answers: ENTJ_HAND_SET })).json();
+
+    const res = await app.request(`/results/${submitted.resultId}`, {
+      headers: { "X-Guest-Token": submitted.guestToken },
+    });
+
+    expect(res.status).toBe(200);
+    const detail = await res.json();
+    expect(detail.breakdown).toEqual(submitted.breakdown);
+    expect(detail.breakdown).toEqual(ENTJ_HAND_BREAKDOWN);
+  });
+
+  it("detail is computed from the stored columns (changing them changes the breakdown)", async () => {
+    const submitted = await (await submit({ answers: ENTJ_HAND_SET })).json();
+    await pool.query(
+      `update test_result set ei_score = -3, sn_score = 3, tf_score = 0, jp_score = -12 where id = $1`,
+      [submitted.resultId],
+    );
+
+    const detail = await (
+      await app.request(`/results/${submitted.resultId}`, {
+        headers: { "X-Guest-Token": submitted.guestToken },
+      })
+    ).json();
+
+    expect(detail.breakdown).toEqual({ ei: 37, sn: 63, tf: 50, jp: 0 });
+  });
+});
+
+describe("Ticket 5 — OpenAPI", () => {
+  const schemas = app.getOpenAPIDocument(OPENAPI_CONFIG).components?.schemas as Record<string, any>;
+
+  it("both responses reference one shared Breakdown schema of 4 integer % fields", () => {
+    expect(schemas.SubmitTestResponse.properties.breakdown.$ref).toBe("#/components/schemas/Breakdown");
+    expect(schemas.GetResultResponse.properties.breakdown.$ref).toBe("#/components/schemas/Breakdown");
+    const b = schemas.Breakdown;
+    expect(Object.keys(b.properties).sort()).toEqual(["ei", "jp", "sn", "tf"]);
+    for (const field of Object.values(b.properties) as any[]) {
+      expect(field).toMatchObject({ type: "integer", minimum: 0, maximum: 100 });
+    }
   });
 });

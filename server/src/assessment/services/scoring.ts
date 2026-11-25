@@ -43,8 +43,11 @@ export function scoreAxes(answers: readonly Answer[]): Record<Dichotomy, number>
 
 /** Pure and deterministic: same answers always give the same type, in any order. */
 export function calculateMbtiType(answers: readonly Answer[]): string {
-  const net = scoreAxes(answers);
+  return mbtiTypeFromNet(scoreAxes(answers));
+}
 
+/** 4-letter type from already-computed net scores (lets callers score the answers once). */
+export function mbtiTypeFromNet(net: Record<Dichotomy, number>): string {
   return AXIS_ORDER.map((axis) => {
     const [first, second] = LETTERS[axis];
     // A tie (net === 0) goes to the letter that comes first in the MBTI convention

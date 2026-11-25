@@ -1,4 +1,5 @@
 import type { Db } from "../../db/client";
+import { type Breakdown, toBreakdown } from "./breakdown";
 import {
   findCompatibilityByType,
   findResultWithTypeInfoById,
@@ -11,6 +12,7 @@ export type GetResultResponse = {
   goldenPair: string;
   compatibleTypes: string[];
   challengingTypes: string[];
+  breakdown: Breakdown;
 };
 
 /**
@@ -57,5 +59,12 @@ export async function getResult(
     challengingTypes: compatibility
       .filter((c) => c.kind === "challenging")
       .map((c) => c.otherType),
+    // From the stored net scores (raw answers are not kept), so it matches submit exactly.
+    breakdown: toBreakdown({
+      EI: row.eiScore,
+      SN: row.snScore,
+      TF: row.tfScore,
+      JP: row.jpScore,
+    }),
   };
 }

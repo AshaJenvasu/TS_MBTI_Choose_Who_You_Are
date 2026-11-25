@@ -69,12 +69,22 @@ export const testResult = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
+    // Net score per axis from scoreAxes(): (first letter) - (second letter), -12..+12.
+    // Kept instead of the 24 raw answers: enough to show the % breakdown again later.
+    eiScore: integer("ei_score").notNull(),
+    snScore: integer("sn_score").notNull(),
+    tfScore: integer("tf_score").notNull(),
+    jpScore: integer("jp_score").notNull(),
   },
   (t) => [
     check(
       "test_result_user_or_guest",
       sql`${t.userId} IS NOT NULL OR ${t.guestToken} IS NOT NULL`,
     ),
+    check("test_result_ei_score_range", sql`${t.eiScore} BETWEEN -12 AND 12`),
+    check("test_result_sn_score_range", sql`${t.snScore} BETWEEN -12 AND 12`),
+    check("test_result_tf_score_range", sql`${t.tfScore} BETWEEN -12 AND 12`),
+    check("test_result_jp_score_range", sql`${t.jpScore} BETWEEN -12 AND 12`),
   ],
 );
 

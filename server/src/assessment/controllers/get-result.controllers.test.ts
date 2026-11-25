@@ -21,8 +21,10 @@ async function insertResult(
   userId: string | null = null,
 ) {
   const { rows } = await pool.query<{ id: string }>(
-    `insert into test_result (user_id, guest_token, mbti_type, matched_character_id)
-     select $1, $2, c.mbti_type, c.id from "character" c where c.mbti_type = $3
+    // Net scores are NOT NULL since Ticket 5; 0 on every axis is enough for these tests.
+    `insert into test_result (user_id, guest_token, mbti_type, matched_character_id,
+                              ei_score, sn_score, tf_score, jp_score)
+     select $1, $2, c.mbti_type, c.id, 0, 0, 0, 0 from "character" c where c.mbti_type = $3
      returning id`,
     [userId, guestToken, mbtiType],
   );
@@ -79,6 +81,7 @@ describe("GET /results/:resultId — AC1 owner sees the result", () => {
     const expected = await expectedFor("ENFP");
 
     expect(Object.keys(body).sort()).toEqual([
+      "breakdown",
       "challengingTypes",
       "character",
       "compatibleTypes",
@@ -272,6 +275,7 @@ describe("GET /results/:resultId — OpenAPI document", () => {
     const schemas = doc.components?.schemas as Record<string, any>;
     const ok = schemas.GetResultResponse;
     expect(Object.keys(ok.properties).sort()).toEqual([
+      "breakdown",
       "challengingTypes",
       "character",
       "compatibleTypes",

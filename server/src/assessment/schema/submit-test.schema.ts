@@ -1,5 +1,6 @@
 import { z } from "@hono/zod-openapi";
 import { QUESTIONS } from "../services/question-bank";
+import { BreakdownSchema } from "./breakdown.schema";
 
 const QUESTION_IDS = new Set(QUESTIONS.map((q) => q.id));
 
@@ -71,6 +72,7 @@ export const SubmitTestResponse = z
       description: z.string(),
     }),
     goldenPairType: z.string().length(4),
+    breakdown: BreakdownSchema,
   })
   .openapi("SubmitTestResponse");
 
