@@ -4,6 +4,7 @@ import { createSubmitTestRoutes } from "./assessment/controllers/submit-test.con
 import type { Db } from "./db/client";
 import { globalErrorHandler } from "./errors";
 import type { Auth } from "./identity/auth";
+import { createMeRoutes } from "./identity/controllers/me.controllers";
 
 export const OPENAPI_CONFIG = {
   openapi: "3.0.0",
@@ -17,6 +18,7 @@ export function createApp(db: Db, auth?: Auth) {
   // Not in OpenAPI: see Better Auth docs. Optional so tests without auth still build the app.
   if (auth) {
     app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
+    app.route("/", createMeRoutes(auth));
   }
   app.route("/", createSubmitTestRoutes(db));
   app.route("/", createGetResultRoutes(db));

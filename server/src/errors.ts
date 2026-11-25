@@ -2,6 +2,19 @@ import { z } from "@hono/zod-openapi";
 import type { ErrorHandler } from "hono";
 import { HTTPException } from "hono/http-exception";
 
+/**
+ * Shape of the 401 response from `requireAuth`. Shared: any protected route lists it under
+ * `responses[401]`. One fixed body for every reason (no cookie, expired, revoked, tampered).
+ */
+export const UnauthorizedResponse = z
+  .object({
+    error: z.object({
+      code: z.literal("UNAUTHORIZED"),
+      message: z.string(),
+    }),
+  })
+  .openapi("UnauthorizedResponse");
+
 /** Shape of the 500 response. Shared: any route can list it under `responses[500]`. */
 export const InternalServerErrorResponse = z
   .object({
