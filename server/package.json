@@ -12,7 +12,8 @@
     "db:seed": "bun run src/assessment/repositories/seed.ts",
     "db:setup": "bun run db:migrate && bun run db:seed",
     "dev": "bun run src/dev.ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "lint:deps": "depcruise src --config .dependency-cruiser.cjs"
   },
   "dependencies": {
     "@hono/zod-openapi": "^1.6.3",
@@ -24,8 +25,10 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@swc/core": "^1.16.22",
     "@types/node": "^26.6.6",
     "@types/pg": "^8.23.1",
+    "dependency-cruiser": "^18.9.0",
     "drizzle-dbml-generator": "^0.10.0",
     "drizzle-kit": "^0.31.11",
     "typescript": "^7.0.2",
