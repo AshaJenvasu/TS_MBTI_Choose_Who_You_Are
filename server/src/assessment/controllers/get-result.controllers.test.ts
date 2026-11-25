@@ -64,6 +64,7 @@ beforeEach(async () => {
 
 afterAll(async () => {
   await pool.query(`delete from test_result`);
+  await pool.query(`delete from "user" where id = 'user-123'`);
   await pool.end();
   await close();
 });
@@ -192,6 +193,11 @@ describe("GET /results/:resultId — AC4 someone else's result (BOLA)", () => {
   });
 
   it("a result owned by a user id (no guest token) is also 404 for any token", async () => {
+    // test_result.user_id has a FK to "user" (Ticket 04), so the owner must exist.
+    await pool.query(
+      `insert into "user" (id, name, email) values ('user-123', 'Owner', 'user-123@example.test')
+       on conflict (id) do nothing`,
+    );
     const id = await insertResult(null, "ENFP", "user-123");
     const res = await get(id, OTHER_TOKEN);
     const missing = await get(nowhere(), OTHER_TOKEN);

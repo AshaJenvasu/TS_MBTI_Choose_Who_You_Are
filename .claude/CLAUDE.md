@@ -27,3 +27,8 @@ BOUNDED CONTEXTS:
 - ก่อนจบ session ทุกครั้ง ต้องอัปเดต `HANDOFF.md` ของ feature ที่กำลังทำอยู่ (เก็บที่ `.scratch/<feature>/HANDOFF.md`) ให้ตรงกับสถานะล่าสุด (ticket ไหนเสร็จ/ค้าง, ขั้นต่อไปคืออะไร)
 - ห้ามเขียนทับหรือลบ section ของ "วันอื่น/session อื่นที่ปิดไปแล้ว" ใน HANDOFF.md — ให้เพิ่ม section ใหม่ต่อท้ายเสมอ (กันเสียประวัติ)
 - การแก้ข้อความภายใน section ของ "วันเดียวกัน/session เดียวกันที่ยังเปิดอยู่" ไม่ถือเป็นการ overwrite ประวัติ — แก้ได้ตามปกติเพื่อให้ข้อมูลล่าสุดถูกต้อง
+
+## Auth endpoints (Better Auth)
+
+- `/api/auth/*` (sign-in/social, callback/google, sign-out, get-session) เป็นของ Better Auth เอง mount ใน `server/src/app.ts` — ไม่ผ่าน `@hono/zod-openapi` และไม่อยู่ใน `/doc` (OpenAPI)
+- ห้ามสร้าง OpenAPI entry ปลอมให้ route เหล่านี้ — ดู spec ที่ Better Auth docs: https://www.better-auth.com/docs/concepts/api

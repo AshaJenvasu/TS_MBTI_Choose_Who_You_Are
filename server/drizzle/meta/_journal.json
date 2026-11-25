@@ -22,6 +22,20 @@
       "when": 1795503301111,
       "tag": "0002_safe_annihilus",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795567634318,
+      "tag": "0003_handy_vapor",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795568636723,
+      "tag": "0004_tired_kid_colt",
+      "breakpoints": true
     }
   ]
 }

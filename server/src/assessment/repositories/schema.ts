@@ -11,6 +11,7 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
+import { user } from "../../identity/repositories/schema";
 
 export const compatibilityKind = pgEnum("compatibility_kind", [
   "compatible",
@@ -51,12 +52,13 @@ export const character = pgTable(
   (t) => [unique("character_mbti_type_unique").on(t.mbtiType)],
 );
 
-// user_id has no FK yet: the user table belongs to Identity (Epic 2, Better Auth).
+// user_id references Identity's Better Auth "user" table (text id). Claim (ADR-003)
+// sets it. RESTRICT: a user who still owns results cannot be deleted by accident.
 export const testResult = pgTable(
   "test_result",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    userId: text("user_id"),
+    userId: text("user_id").references(() => user.id, { onDelete: "restrict" }),
     guestToken: uuid("guest_token").unique(),
     mbtiType: text("mbti_type")
       .notNull()
