@@ -11,7 +11,7 @@
 
 ## Test ต้องครอบคลุม (อิง AC1-AC4)
 - [ ] AC1: guest submit สำเร็จ → ได้ guestToken กลับมา
-- [ ] AC2: logged-in submit สำเร็จ → ไม่มี guestToken ใน response
+- [ ] AC2: logged-in submit สำเร็จ → guestToken เป็น null ใน response (key มีอยู่ ค่า null) ตามที่ตัดสินใจใน A3
 - [ ] AC3: answers ไม่ครบ/ค่าผิด → 400 `INVALID_ANSWERS`, ไม่มีแถวค้าง DB
 - [ ] AC4: คำตอบชุดเดียวกัน → character ตัวเดิมเสมอ (เทส 2 ครั้งเทียบกัน)
 
@@ -22,3 +22,8 @@ RED → GREEN → REFACTOR ตามลำดับ เขียน test คร�
 - **API4 Unrestricted Resource Consumption**: ควรมี rate-limit เบื้องต้นกัน spam submit รัวๆ (เช่น 10 req/min ต่อ IP) — ใส่ไว้ตั้งแต่ ticket นี้เลยเพราะ endpoint เปิดให้ guest เรียกได้โดยไม่ต้อง auth
 
 อัปเดต 2026-11-26: 20 → 24 ข้อ ตาม ADR-005
+
+หมายเหตุ 2026-11-26: rate-limit ยังไม่ได้ทำ ค้างเป็น TODO(security-debt) ใน submit-test.controllers.ts
+ติดตามที่ Epic 5 Deployment & Hardening (SD-1) ใน Notion backlog
+
+อัปเดต 2026-11-26: AC2 → guestToken: null ตาม A3
