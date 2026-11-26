@@ -14,7 +14,7 @@ BOUNDED CONTEXTS:
 - Claim = การผูกผล guest เข้ากับบัญชีที่สมัคร/login
 - ShareLink = ลิงก์สาธารณะสำหรับแชร์ผล
   LATEST EVENT FLOW: User → ClaimResult (POST /results/:resultId/claim, requireAuth, X-Guest-Token) → SessionValidated → atomic UPDATE (user_id = me, guest_token = NULL WHERE user_id IS NULL AND guest_token = token) → ResultClaimed (200 short item; then in GET /results) | already mine → 200 same result (idempotent) | someone else's / wrong token / no such id → NotFound (404) | no session → Unauthorized (401)
-  CURRENT FEATURE: Epic 2 Feature B, Ticket B1 — claim guest result — done, not committed
+  CURRENT FEATURE: Epic 2 (Identity & Claim) backend เสร็จและ commit แล้ว (B1 commit e12be19) · ถัดไป: Epic 3 (History) ยังไม่เริ่ม
 
 ## Working style
 

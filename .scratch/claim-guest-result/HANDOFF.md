@@ -3,7 +3,7 @@
 ## Session 2026-11-26 — B1: POST /results/:resultId/claim
 
 ### สถานะ
-- โค้ด + tests เสร็จ ยังไม่ commit
+- โค้ด + tests เสร็จ commit แล้ว (`e12be19`)
 - Tests 247 passed (12 files) | `tsc --noEmit` (`bun node_modules/typescript/bin/tsc`) ผ่าน | `lint:deps` exit 0 (66 modules, 176 dependencies)
 - Ticket: `.scratch/claim-guest-result/issues/01-claim-result-endpoint.md`
 
@@ -36,5 +36,7 @@
 - ADR-003: เพิ่ม "หมายเหตุอัปเดต (2026-11-26)" ท้ายไฟล์ว่ากรณีไม่ใช่เจ้าของตอบ 404 ไม่ใช่ 403 (เช็คแล้วว่าทั้ง GET และ claim ตอบ 404 จริง)
 
 ### ขั้นต่อไป
-1. Review + commit B1
+1. ~~Review + commit B1~~ เสร็จแล้ว (`e12be19`)
 2. rate-limit ของ claim → จดไว้ใน backlog Epic 5 (SD-1) คู่กับของ submit
+3. หลังปิด B1 ใน session เดียวกันได้ทำแบบ read-only เพิ่ม: เทียบ ADR-003 กับโค้ด, รวบรวมข้อมูล Epic 2 และ schema ทุกตาราง + migration 0000–0006 เพื่อทำเอกสาร Notion (ไม่ได้แก้ไฟล์)
+4. ปิด Epic 2: ยืนยันแล้ว: manual test ของ A1 กับ Google จริงผ่านครบ AC1-4 (ตามที่ผู้ใช้แจ้ง) (`.scratch/auth-setup/HANDOFF.md:6` ยังบันทึกว่าค้างอยู่)
