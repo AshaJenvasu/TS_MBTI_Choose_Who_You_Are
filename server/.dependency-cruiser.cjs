@@ -41,6 +41,14 @@ module.exports = {
       from: { path: "^src/sharing/" },
       to: { path: "^src/identity/" },
     },
+    {
+      name: "assessment-not-to-sharing",
+      comment:
+        "Assessment is upstream of Sharing (Sharing reads it through an ACL). Upstream must not depend on downstream Sharing.",
+      severity: "error",
+      from: { path: "^src/assessment/" },
+      to: { path: "^src/sharing/" },
+    },
   ],
   options: {
     // typescript@7.0 has no JS compiler API that dependency-cruiser can use, so parse with swc.
