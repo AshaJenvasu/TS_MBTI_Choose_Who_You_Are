@@ -1,4 +1,5 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
+import { createClaimResultRoutes } from "./assessment/controllers/claim-result.controllers";
 import { createGetResultRoutes } from "./assessment/controllers/get-result.controllers";
 import { createListResultsRoutes } from "./assessment/controllers/list-results.controllers";
 import { createSubmitTestRoutes } from "./assessment/controllers/submit-test.controllers";
@@ -21,6 +22,7 @@ export function createApp(db: Db, auth?: Auth) {
     app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
     app.route("/", createMeRoutes(auth));
     app.route("/", createListResultsRoutes(db, auth));
+    app.route("/", createClaimResultRoutes(db, auth));
   }
   // Guests and signed-in users both use these: the session is optional (no auth → guest only).
   app.route("/", createSubmitTestRoutes(db, auth));

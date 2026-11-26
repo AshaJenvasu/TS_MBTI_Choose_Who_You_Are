@@ -32,3 +32,7 @@ WHERE id = :resultId AND guest_token = :presentedToken AND user_id IS NULL
 ## Alternatives Considered
 - **เก็บ `guest_token` ตลอดไป (ไม่ล้าง)** — ปัดตก เพราะมีช่องโหว่ security (token หลุดใช้ดูผลได้อยู่) + ขัด data hygiene
 - **Off-site backup เพิ่มเติม (เช่น pg_dump ไป S3)** — ปัดตก เพราะเกิน scope/budget ของโปรเจกต์ personal portfolio นี้
+
+## หมายเหตุอัปเดต (2026-11-26)
+- กรณีไม่ใช่เจ้าของ resource ระบบตอบ 404 (ไม่ใช่ 403) เพื่อไม่บอกว่า resource นั้นมีอยู่จริง (OWASP API1)
+  ข้อความเดิมที่ระบุ 403 ให้ถือตามหมายเหตุนี้
