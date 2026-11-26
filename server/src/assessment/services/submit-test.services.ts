@@ -20,11 +20,17 @@ export type SubmitTestResult = {
   breakdown: Breakdown;
 };
 
+/**
+ * Who owns the new TestResult: the signed-in user (id from the session only),
+ * or a guest identified by a fresh guest token.
+ */
+export type ResultOwner = { userId: string } | { guestToken: string };
+
 /** Scores the answers, matches the character, and records one TestResult. */
 export async function submitTest(
   db: Db,
   answers: readonly Answer[],
-  guestToken: string,
+  owner: ResultOwner,
 ): Promise<SubmitTestResult> {
   // Score once: the same net scores give the type, the breakdown and the stored columns.
   const net = scoreAxes(answers);
@@ -37,9 +43,12 @@ export async function submitTest(
     throw new Error(`No character seeded for MBTI type ${mbtiType}`);
   }
 
-  // Auth is Epic 2: every request is a guest for now (user_id stays null).
+  // Exactly one owner column is set: user_id for a signed-in user, guest_token for a guest.
+  const userId = "userId" in owner ? owner.userId : null;
+  const guestToken = "guestToken" in owner ? owner.guestToken : null;
+
   const resultId = await insertTestResult(db, {
-    userId: null,
+    userId,
     guestToken,
     mbtiType,
     matchedCharacterId: matched.characterId,

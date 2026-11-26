@@ -1,6 +1,12 @@
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import type { Db } from "../../db/client";
 import { InternalServerErrorResponse, globalErrorHandler } from "../../errors";
+import type { Auth } from "../../identity/auth";
+import {
+  createOptionalAuth,
+  OPTIONAL_SESSION_SECURITY,
+  type OptionalAuthEnv,
+} from "../../identity/middleware/optional-auth";
 import {
   GetResultHeaders,
   GetResultParams,
@@ -8,52 +14,61 @@ import {
   InvalidGetResultRequestResponse,
   ResultNotFoundResponse,
 } from "../schema/get-result.schema";
-import { getResult, ResultNotFoundError } from "../services/get-result.services";
-
-const getResultRoute = createRoute({
-  method: "get",
-  path: "/results/{resultId}",
-  tags: ["Assessment"],
-  summary: "Get a test result again (guest token required)",
-  request: { params: GetResultParams, headers: GetResultHeaders },
-  responses: {
-    200: {
-      description: "The result, for the guest token that owns it",
-      content: { "application/json": { schema: GetResultResponse } },
-    },
-    400: {
-      description:
-        "resultId is not a UUID (INVALID_RESULT_ID) or X-Guest-Token is missing (AUTH_REQUIRED)",
-      content: {
-        "application/json": { schema: InvalidGetResultRequestResponse },
-      },
-    },
-    404: {
-      description:
-        "No such result, or it belongs to someone else (the two look identical on purpose)",
-      content: { "application/json": { schema: ResultNotFoundResponse } },
-    },
-    500: {
-      description: "Unexpected server error",
-      content: { "application/json": { schema: InternalServerErrorResponse } },
-    },
-  },
-});
+import {
+  getResult,
+  ResultNotFoundError,
+  type ResultViewer,
+} from "../services/get-result.services";
 
 const badRequest = (code: "INVALID_RESULT_ID" | "AUTH_REQUIRED", message: string) => ({
   error: { code, message },
 });
 
-export function createGetResultRoutes(db: Db) {
-  const routes = new OpenAPIHono({
+const AUTH_REQUIRED_MESSAGE = "X-Guest-Token header is required";
+
+export function createGetResultRoutes(db: Db, auth?: Auth) {
+  const optionalAuth = createOptionalAuth(auth);
+
+  const getResultRoute = createRoute({
+    method: "get",
+    path: "/results/{resultId}",
+    tags: ["Assessment"],
+    summary: "Get a test result again (guest token or session)",
+    // Either credential: X-Guest-Token (checked first) or the session cookie.
+    security: OPTIONAL_SESSION_SECURITY,
+    middleware: [optionalAuth] as const,
+    request: { params: GetResultParams, headers: GetResultHeaders },
+    responses: {
+      200: {
+        description:
+          "The result, for the guest token or the signed-in user that owns it",
+        content: { "application/json": { schema: GetResultResponse } },
+      },
+      400: {
+        description:
+          "resultId is not a UUID (INVALID_RESULT_ID), or there is neither an X-Guest-Token nor a valid session (AUTH_REQUIRED)",
+        content: {
+          "application/json": { schema: InvalidGetResultRequestResponse },
+        },
+      },
+      404: {
+        description:
+          "No such result, or it belongs to someone else (the two look identical on purpose)",
+        content: { "application/json": { schema: ResultNotFoundResponse } },
+      },
+      500: {
+        description: "Unexpected server error",
+        content: { "application/json": { schema: InternalServerErrorResponse } },
+      },
+    },
+  });
+
+  const routes = new OpenAPIHono<OptionalAuthEnv>({
     defaultHook: (result, c) => {
       if (result.success) return;
       // `target` says which part of the request failed validation.
       if (result.target === "header") {
-        return c.json(
-          badRequest("AUTH_REQUIRED", "X-Guest-Token header is required"),
-          400,
-        );
+        return c.json(badRequest("AUTH_REQUIRED", AUTH_REQUIRED_MESSAGE), 400);
       }
       return c.json(
         badRequest("INVALID_RESULT_ID", "resultId must be a valid UUID"),
@@ -67,9 +82,17 @@ export function createGetResultRoutes(db: Db) {
   return routes.openapi(getResultRoute, async (c) => {
     const { resultId } = c.req.valid("param");
     const { "x-guest-token": guestToken } = c.req.valid("header");
+    const user = c.get("user");
+
+    // Guest token first (a signed-in user may still hold an unclaimed guest result),
+    // then the session user. The user id comes from the session only (API1).
+    let viewer: ResultViewer;
+    if (guestToken !== undefined) viewer = { guestToken };
+    else if (user) viewer = { userId: user.id };
+    else return c.json(badRequest("AUTH_REQUIRED", AUTH_REQUIRED_MESSAGE), 400);
 
     try {
-      return c.json(await getResult(db, resultId, guestToken), 200);
+      return c.json(await getResult(db, resultId, viewer), 200);
     } catch (err) {
       // Same status and body whether the result is missing or not yours.
       if (err instanceof ResultNotFoundError) {

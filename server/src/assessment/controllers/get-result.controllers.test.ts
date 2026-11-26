@@ -1,7 +1,16 @@
-import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import pg from "pg";
 import { createApp, OPENAPI_CONFIG } from "../../app";
 import { createDb } from "../../db/client";
+import { createAuth } from "../../identity/auth";
+import {
+  ALICE,
+  CookieJar,
+  createTestClient,
+  type GoogleProfile,
+  stubGoogleTokenEndpoint,
+  TEST_AUTH_CONFIG,
+} from "../../identity/testing/fake-google";
 import { QUESTIONS } from "../services/question-bank";
 
 // Real Postgres (docker compose) with migration + seed applied: `bun run db:setup`.
@@ -9,7 +18,23 @@ const url =
   process.env.DATABASE_URL ?? "postgres://mbti:mbti@localhost:5433/mbti";
 const pool = new pg.Pool({ connectionString: url });
 const { db, close } = createDb(url);
-const app = createApp(db);
+const auth = createAuth(db, TEST_AUTH_CONFIG);
+const app = createApp(db, auth);
+const client = createTestClient(app);
+
+const BOB: GoogleProfile = { sub: "google-sub-bob", email: "bob@example.test", name: "Bob" };
+let googleUser: GoogleProfile = ALICE;
+
+/** Signs in as `who` through the real (fake-Google) flow; returns the jar and user id. */
+async function signInAs(who: GoogleProfile) {
+  googleUser = who;
+  const { jar } = await client.signIn();
+  const { rows } = await pool.query<{ id: string }>(
+    `select id from "user" where email = $1`,
+    [who.email],
+  );
+  return { jar, userId: rows[0]!.id };
+}
 
 const OWNER_TOKEN = "11111111-1111-4111-8111-111111111111";
 const OTHER_TOKEN = "22222222-2222-4222-8222-222222222222";
@@ -60,13 +85,34 @@ async function expectedFor(mbtiType: string) {
   };
 }
 
-beforeEach(async () => {
+/** GET with an optional session cookie and an optional X-Guest-Token. */
+const getAs = (resultId: string, opts: { jar?: CookieJar; guestToken?: string }) => {
+  const headers: Record<string, string> = {};
+  if (opts.jar) headers.Cookie = opts.jar.header();
+  if (opts.guestToken !== undefined) headers["X-Guest-Token"] = opts.guestToken;
+  return app.request(`/results/${resultId}`, { headers });
+};
+
+async function clearAll() {
   await pool.query(`delete from test_result`);
+  await pool.query(`delete from session`);
+  await pool.query(`delete from account`);
+  await pool.query(`delete from verification`);
+  await pool.query(`delete from "user"`);
+}
+
+beforeEach(async () => {
+  await clearAll();
+  googleUser = ALICE;
+  stubGoogleTokenEndpoint(() => googleUser);
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 afterAll(async () => {
-  await pool.query(`delete from test_result`);
-  await pool.query(`delete from "user" where id = 'user-123'`);
+  await clearAll();
   await pool.end();
   await close();
 });
@@ -160,6 +206,15 @@ describe("GET /results/:resultId — AC2 resultId is not a UUID", () => {
       expect(json.error.message.length).toBeGreaterThan(0);
     },
   );
+
+  it("bad resultId with no X-Guest-Token and no session → 400 INVALID_RESULT_ID (not AUTH_REQUIRED)", async () => {
+    // Since Epic 2 A3 the header is optional, so the param check wins over the missing credential.
+    const res = await get("not-a-uuid");
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(Object.keys(json)).toEqual(["error"]);
+    expect(json.error.code).toBe("INVALID_RESULT_ID");
+  });
 });
 
 describe("GET /results/:resultId — AC3 no such result", () => {
@@ -254,6 +309,133 @@ describe("GET /results/:resultId — AC5 no X-Guest-Token header", () => {
   });
 });
 
+describe("GET /results/:resultId — A3 signed-in owner (session, no X-Guest-Token)", () => {
+  it("the session user sees their own result: 200 with the full body", async () => {
+    const alice = await signInAs(ALICE);
+    const id = await insertResult(null, "ENFP", alice.userId);
+
+    const res = await getAs(id, { jar: alice.jar });
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    const expected = await expectedFor("ENFP");
+    expect(body).toEqual({
+      mbtiType: "ENFP",
+      character: {
+        name: expected.row.name,
+        imageUrl: expected.row.image_url,
+        description: expected.row.description,
+      },
+      house: expected.row.house,
+      goldenPair: expected.row.golden_pair_type,
+      compatibleTypes: expected.compatible,
+      challengingTypes: expected.challenging,
+      breakdown: { ei: 50, sn: 50, tf: 50, jp: 50 },
+    });
+    // The owner id never leaks back.
+    expect(JSON.stringify(body)).not.toContain(alice.userId);
+  });
+
+  it("BOLA: user B asking for user A's result gets exactly the nonexistent 404", async () => {
+    const alice = await signInAs(ALICE);
+    const bob = await signInAs(BOB);
+    const id = await insertResult(null, "ENFP", alice.userId);
+    // Control: the row exists and its owner reads it.
+    expect((await getAs(id, { jar: alice.jar })).status).toBe(200);
+
+    const notYours = await getAs(id, { jar: bob.jar });
+    const missing = await getAs(nowhere(), { jar: bob.jar });
+
+    expect(notYours.status).toBe(404);
+    expect(await notYours.text()).toBe(await missing.text());
+    expect(notYours.headers.get("content-type")).toBe(missing.headers.get("content-type"));
+  });
+
+  it("a session cannot read a guest's result (user_id null) without its token", async () => {
+    const alice = await signInAs(ALICE);
+    const id = await insertResult(OWNER_TOKEN);
+
+    const res = await getAs(id, { jar: alice.jar });
+    const missing = await getAs(nowhere(), { jar: alice.jar });
+
+    expect(res.status).toBe(404);
+    expect(await res.text()).toBe(await missing.text());
+  });
+
+  it("a nonexistent result with a session → 404 RESULT_NOT_FOUND", async () => {
+    const alice = await signInAs(ALICE);
+    const res = await getAs(nowhere(), { jar: alice.jar });
+    expect(res.status).toBe(404);
+    expect((await res.json()).error.code).toBe("RESULT_NOT_FOUND");
+  });
+
+  it("a user id sent by the client is ignored: the session decides", async () => {
+    const alice = await signInAs(ALICE);
+    const bob = await signInAs(BOB);
+    const bobsResult = await insertResult(null, "ESTJ", bob.userId);
+
+    const res = await app.request(`/results/${bobsResult}?userId=${bob.userId}`, {
+      headers: { Cookie: alice.jar.header(), "X-User-Id": bob.userId },
+    });
+
+    expect(res.status).toBe(404);
+  });
+
+  it("works for a result just created by a signed-in POST /test/submit", async () => {
+    const alice = await signInAs(ALICE);
+    const answers = QUESTIONS.map((q) => ({ questionId: q.id, value: 3 }));
+    const created = await (
+      await app.request("/test/submit", {
+        method: "POST",
+        headers: { "content-type": "application/json", Cookie: alice.jar.header() },
+        body: JSON.stringify({ answers }),
+      })
+    ).json();
+    expect(created.guestToken).toBeNull();
+
+    const res = await getAs(created.resultId, { jar: alice.jar });
+    expect(res.status).toBe(200);
+    expect((await res.json()).mbtiType).toBe(created.mbtiType);
+  });
+});
+
+describe("GET /results/:resultId — A3 guest token has priority over the session", () => {
+  it("signed in + X-Guest-Token of a cached guest result → 200 (token wins)", async () => {
+    const alice = await signInAs(ALICE);
+    const id = await insertResult(OWNER_TOKEN, "ISTJ");
+
+    const res = await getAs(id, { jar: alice.jar, guestToken: OWNER_TOKEN });
+
+    expect(res.status).toBe(200);
+    expect((await res.json()).mbtiType).toBe("ISTJ");
+  });
+
+  it("a wrong token never falls back to the session, even for the user's own result → 404", async () => {
+    const alice = await signInAs(ALICE);
+    const id = await insertResult(null, "ENFP", alice.userId);
+
+    const res = await getAs(id, { jar: alice.jar, guestToken: OTHER_TOKEN });
+    const missing = await getAs(nowhere(), { jar: alice.jar, guestToken: OTHER_TOKEN });
+
+    expect(res.status).toBe(404);
+    expect(await res.text()).toBe(await missing.text());
+  });
+});
+
+describe("GET /results/:resultId — A3 no usable credential", () => {
+  it("invalid session cookie and no X-Guest-Token → the same 400 AUTH_REQUIRED (not 401/500)", async () => {
+    const id = await insertResult(OWNER_TOKEN);
+    const jar = new CookieJar();
+    jar.set("better-auth.session_token", "not-a-real-token.not-a-real-signature");
+
+    const res = await getAs(id, { jar });
+    const noCredential = await get(id);
+
+    expect(res.status).toBe(400);
+    expect(await res.text()).toBe(await noCredential.text());
+  });
+});
+
 describe("GET /results/:resultId — OpenAPI document", () => {
   const doc = app.getOpenAPIDocument(OPENAPI_CONFIG);
   const op = doc.paths["/results/{resultId}"]?.get as any;
@@ -268,7 +450,8 @@ describe("GET /results/:resultId — OpenAPI document", () => {
     expect(byName.resultId.in).toBe("path");
     expect(byName.resultId.schema.format).toBe("uuid");
     expect(byName["x-guest-token"].in).toBe("header");
-    expect(byName["x-guest-token"].required).toBe(true);
+    // Optional since Epic 2 A3: a signed-in user can read their own result with the session.
+    expect(byName["x-guest-token"].required ?? false).toBe(false);
   });
 
   it("documents the 200 body and the 404 error body", () => {

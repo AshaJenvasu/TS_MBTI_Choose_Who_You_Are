@@ -26,19 +26,30 @@ export class ResultNotFoundError extends Error {
 }
 
 /**
- * Returns the result only to the guest token that owns it.
- * Guest tokens are the only owner check for now (sessions arrive with Epic 2).
+ * Who is asking: a guest token from X-Guest-Token, or the session user's id.
+ * The caller picks one (guest token first); there is no fallback between them.
  */
+export type ResultViewer = { guestToken: string } | { userId: string };
+
+const isOwner = (
+  row: { guestToken: string | null; userId: string | null },
+  viewer: ResultViewer,
+) =>
+  "guestToken" in viewer
+    ? row.guestToken !== null && row.guestToken === viewer.guestToken
+    : row.userId !== null && row.userId === viewer.userId;
+
+/** Returns the result only to its owner: the guest token or the user that owns it. */
 export async function getResult(
   db: Db,
   resultId: string,
-  guestToken: string,
+  viewer: ResultViewer,
 ): Promise<GetResultResponse> {
   const row = await findResultWithTypeInfoById(db, resultId);
 
-  // No row, a row with no guest token (not a guest result), or a different token:
-  // all the same error.
-  if (!row || row.guestToken === null || row.guestToken !== guestToken) {
+  // No row, or a row this viewer does not own (other token/user, or the other
+  // owner kind): all the same error.
+  if (!row || !isOwner(row, viewer)) {
     throw new ResultNotFoundError();
   }
 

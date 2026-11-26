@@ -11,6 +11,8 @@ import {
 export async function findResultWithTypeInfoById(db: Db, resultId: string) {
   const [row] = await db
     .select({
+      // Owner columns: used for the ownership check only, never returned to the client.
+      userId: testResult.userId,
       guestToken: testResult.guestToken,
       mbtiType: testResult.mbtiType,
       characterName: character.name,

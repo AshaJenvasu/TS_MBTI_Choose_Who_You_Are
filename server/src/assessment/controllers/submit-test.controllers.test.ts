@@ -1,7 +1,16 @@
-import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import pg from "pg";
 import { createApp, OPENAPI_CONFIG } from "../../app";
 import { createDb } from "../../db/client";
+import { createAuth } from "../../identity/auth";
+import {
+  ALICE,
+  CookieJar,
+  createTestClient,
+  type GoogleProfile,
+  stubGoogleTokenEndpoint,
+  TEST_AUTH_CONFIG,
+} from "../../identity/testing/fake-google";
 import { QUESTIONS } from "../services/question-bank";
 
 // Real Postgres (docker compose) with migration + seed applied: `bun run db:setup`.
@@ -9,7 +18,23 @@ const url =
   process.env.DATABASE_URL ?? "postgres://mbti:mbti@localhost:5433/mbti";
 const pool = new pg.Pool({ connectionString: url });
 const { db, close } = createDb(url);
-const app = createApp(db);
+const auth = createAuth(db, TEST_AUTH_CONFIG);
+const app = createApp(db, auth);
+const client = createTestClient(app);
+
+const BOB: GoogleProfile = { sub: "google-sub-bob", email: "bob@example.test", name: "Bob" };
+let googleUser: GoogleProfile = ALICE;
+
+/** Signs in as `who` through the real (fake-Google) flow; returns the jar and user id. */
+async function signInAs(who: GoogleProfile) {
+  googleUser = who;
+  const { jar } = await client.signIn();
+  const { rows } = await pool.query<{ id: string }>(
+    `select id from "user" where email = $1`,
+    [who.email],
+  );
+  return { jar, userId: rows[0]!.id };
+}
 
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -27,10 +52,10 @@ const answersFor = (type: string) =>
 const ENFP_ANSWERS = answersFor("ENFP");
 const ISTJ_ANSWERS = answersFor("ISTJ");
 
-const submit = (body: unknown) =>
+const submit = (body: unknown, extraHeaders: Record<string, string> = {}) =>
   app.request("/test/submit", {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", ...extraHeaders },
     body: typeof body === "string" ? body : JSON.stringify(body),
   });
 
@@ -38,12 +63,26 @@ const countResults = async () =>
   (await pool.query<{ n: number }>(`select count(*)::int as n from test_result`))
     .rows[0]!.n;
 
-beforeEach(async () => {
+async function clearAll() {
   await pool.query(`delete from test_result`);
+  await pool.query(`delete from session`);
+  await pool.query(`delete from account`);
+  await pool.query(`delete from verification`);
+  await pool.query(`delete from "user"`);
+}
+
+beforeEach(async () => {
+  await clearAll();
+  googleUser = ALICE;
+  stubGoogleTokenEndpoint(() => googleUser);
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 afterAll(async () => {
-  await pool.query(`delete from test_result`);
+  await clearAll();
   await pool.end();
   await close();
 });
@@ -117,10 +156,79 @@ describe("POST /test/submit — AC1 guest submit succeeds", () => {
   });
 });
 
-// AC2 (logged-in submit, no guestToken) is out of scope for this ticket:
-// Better Auth is Epic 2, so every request is treated as a guest for now.
-describe.skip("POST /test/submit — AC2 logged-in submit (Epic 2)", () => {
-  it.todo("returns no guestToken and stores user_id");
+const storedOwner = async (resultId: string) =>
+  (
+    await pool.query<{ user_id: string | null; guest_token: string | null }>(
+      `select user_id, guest_token from test_result where id = $1`,
+      [resultId],
+    )
+  ).rows[0]!;
+
+describe("POST /test/submit — AC2 logged-in submit (Epic 2 A3)", () => {
+  it("returns guestToken null and stores the session user's id (no guest token)", async () => {
+    const alice = await signInAs(ALICE);
+
+    const res = await submit({ answers: ENFP_ANSWERS }, { Cookie: alice.jar.header() });
+
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.guestToken).toBeNull();
+    expect(body.resultId).toMatch(UUID);
+    expect(body.mbtiType).toBe("ENFP");
+    expect(await countResults()).toBe(1);
+    expect(await storedOwner(body.resultId)).toEqual({
+      user_id: alice.userId,
+      guest_token: null,
+    });
+  });
+
+  it("a user id sent by the client is ignored: the session decides (BOLA)", async () => {
+    const bob = await signInAs(BOB);
+    const alice = await signInAs(ALICE);
+
+    const res = await submit(
+      { answers: ENFP_ANSWERS, userId: bob.userId, user_id: bob.userId },
+      { Cookie: alice.jar.header(), "X-User-Id": bob.userId },
+    );
+
+    expect(res.status).toBe(201);
+    const { resultId } = await res.json();
+    expect((await storedOwner(resultId)).user_id).toBe(alice.userId);
+  });
+
+  it("a guest cannot claim a user id: without a session it is still a guest row", async () => {
+    const bob = await signInAs(BOB);
+
+    const res = await submit(
+      { answers: ENFP_ANSWERS, userId: bob.userId },
+      { "X-User-Id": bob.userId },
+    );
+
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.guestToken).toMatch(UUID);
+    expect(await storedOwner(body.resultId)).toEqual({
+      user_id: null,
+      guest_token: body.guestToken,
+    });
+  });
+});
+
+describe("POST /test/submit — guest regression with auth enabled", () => {
+  it("an invalid session cookie is treated as a guest, never a 401", async () => {
+    const jar = new CookieJar();
+    jar.set("better-auth.session_token", "not-a-real-token.not-a-real-signature");
+
+    const res = await submit({ answers: ENFP_ANSWERS }, { Cookie: jar.header() });
+
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.guestToken).toMatch(UUID);
+    expect(await storedOwner(body.resultId)).toEqual({
+      user_id: null,
+      guest_token: body.guestToken,
+    });
+  });
 });
 
 describe("POST /test/submit — AC3 invalid answers", () => {

@@ -62,7 +62,8 @@ export const SubmitTestResponse = z
   .object({
     resultId: z.uuid(),
     guestToken: z.uuid().nullable().openapi({
-      description: "Set for guests only (every request is a guest for now)",
+      description:
+        "Set for guests only; null when signed in (the result is stored under the session user)",
     }),
     mbtiType: z.string().length(4),
     character: z.object({

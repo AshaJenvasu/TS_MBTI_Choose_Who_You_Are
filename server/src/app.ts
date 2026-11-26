@@ -22,7 +22,8 @@ export function createApp(db: Db, auth?: Auth) {
     app.route("/", createMeRoutes(auth));
     app.route("/", createListResultsRoutes(db, auth));
   }
-  app.route("/", createSubmitTestRoutes(db));
-  app.route("/", createGetResultRoutes(db));
+  // Guests and signed-in users both use these: the session is optional (no auth → guest only).
+  app.route("/", createSubmitTestRoutes(db, auth));
+  app.route("/", createGetResultRoutes(db, auth));
   return app;
 }

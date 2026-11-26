@@ -10,9 +10,12 @@ export const GetResultParams = z.object({
 
 // Hono lowercases header names before validating, so the key must be lowercase.
 // HTTP header names are case-insensitive: clients can send X-Guest-Token.
+// Optional: a signed-in user can send the session cookie instead. An empty value
+// still fails min(1) → 400 AUTH_REQUIRED, same as before.
 export const GetResultHeaders = z.object({
-  "x-guest-token": z.string().min(1).openapi({
-    description: "Guest token returned by POST /test/submit (X-Guest-Token)",
+  "x-guest-token": z.string().min(1).optional().openapi({
+    description:
+      "Guest token returned by POST /test/submit (X-Guest-Token). Takes priority over the session cookie when both are sent.",
   }),
 });
 

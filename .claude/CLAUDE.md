@@ -13,8 +13,8 @@ BOUNDED CONTEXTS:
 - MbtiTypeInfo = ความหมาย/ของแต่ละ type (แยกจาก Character)
 - Claim = การผูกผล guest เข้ากับบัญชีที่สมัคร/login
 - ShareLink = ลิงก์สาธารณะสำหรับแชร์ผล
-  LATEST EVENT FLOW: User → ViewHistory (GET /results, requireAuth) → SessionValidated → HistoryViewed (own results only, newest first; [] if none) | no/invalid session → Unauthorized (401)
-  CURRENT FEATURE: Epic 2 Feature B, Ticket B1 — claim guest result — next up
+  LATEST EVENT FLOW: User → SubmitTest / ViewResult (optionalAuth) → session? TestResult owned by user_id (guestToken null) : by new guest_token | ViewResult: X-Guest-Token first, else session user_id ownership → ResultViewed | not owner → NotFound (404) | neither → AuthRequired (400)
+  CURRENT FEATURE: Epic 2 Ticket A3 (submit + detail for signed-in users) — done, not committed; next: Feature B, Ticket B1 — claim guest result
 
 ## Working style
 
