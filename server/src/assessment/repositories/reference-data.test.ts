@@ -161,3 +161,48 @@ describe("MbtiTypeCompatibility reference data", () => {
     expect(lacking).toEqual([]);
   });
 });
+
+/**
+ * Runs one insert inside a transaction that is always rolled back,
+ * so a constraint test never changes the seeded reference data.
+ */
+async function insertCompatibilityThenRollback(
+  typeCode: string,
+  otherType: string,
+  kind: string | null,
+) {
+  const client = await pool.connect();
+  try {
+    await client.query("begin");
+    return await client.query(
+      `insert into mbti_type_compatibility (type_code, other_type, kind)
+       values ($1, $2, $3)`,
+      [typeCode, otherType, kind],
+    );
+  } finally {
+    await client.query("rollback");
+    client.release();
+  }
+}
+
+describe("MbtiTypeCompatibility constraints (Hardening H1)", () => {
+  it("one pair holds one kind only: same pair with the other kind → 23505", async () => {
+    // INFJ → INFP is seeded as compatible.
+    await expect(
+      insertCompatibilityThenRollback("INFJ", "INFP", "challenging"),
+    ).rejects.toMatchObject({ code: "23505" });
+  });
+
+  it("an exact duplicate row is still rejected → 23505", async () => {
+    await expect(
+      insertCompatibilityThenRollback("INFJ", "INFP", "compatible"),
+    ).rejects.toMatchObject({ code: "23505" });
+  });
+
+  it("kind stays NOT NULL (it is no longer part of the PK) → 23502", async () => {
+    // INFJ → ENFP (golden pair) has no row, so only NOT NULL can reject this.
+    await expect(
+      insertCompatibilityThenRollback("INFJ", "ENFP", null),
+    ).rejects.toMatchObject({ code: "23502", column: "kind" });
+  });
+});

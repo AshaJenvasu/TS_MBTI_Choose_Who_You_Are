@@ -1,0 +1,2 @@
+ALTER TABLE "mbti_type_compatibility" DROP CONSTRAINT "mbti_type_compatibility_type_code_other_type_kind_pk";--> statement-breakpoint
+ALTER TABLE "mbti_type_compatibility" ADD CONSTRAINT "mbti_type_compatibility_type_code_other_type_pk" PRIMARY KEY("type_code","other_type");

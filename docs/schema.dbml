@@ -21,7 +21,7 @@ table mbti_type_compatibility {
   kind compatibility_kind [not null]
 
   indexes {
-    (type_code, other_type, kind) [pk]
+    (type_code, other_type) [pk]
     
   }
 }

@@ -97,10 +97,12 @@ export const mbtiTypeCompatibility = pgTable(
     otherType: text("other_type")
       .notNull()
       .references(() => mbtiTypeInfo.typeCode),
+    // NOT NULL on its own: kind is no longer part of the PK.
     kind: compatibilityKind("kind").notNull(),
   },
   (t) => [
-    primaryKey({ columns: [t.typeCode, t.otherType, t.kind] }),
+    // One row per (type_code, other_type): a pair is compatible OR challenging, never both.
+    primaryKey({ columns: [t.typeCode, t.otherType] }),
     check(
       "mbti_type_compatibility_not_self",
       sql`${t.otherType} <> ${t.typeCode}`,
