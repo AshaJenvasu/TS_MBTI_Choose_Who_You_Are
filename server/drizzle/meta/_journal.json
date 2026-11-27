@@ -50,6 +50,13 @@
       "when": 1795657677026,
       "tag": "0006_fancy_cyclops",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795749994231,
+      "tag": "0007_workable_zombie",
+      "breakpoints": true
     }
   ]
 }

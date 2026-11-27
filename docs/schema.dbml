@@ -43,6 +43,15 @@ table test_result {
   sn_score integer [not null]
   tf_score integer [not null]
   jp_score integer [not null]
+
+  indexes {
+    
+    
+    
+    
+    
+    (user_id, created_at, id) [name: 'test_result_user_id_created_at_id_idx']
+  }
 }
 
 table account {

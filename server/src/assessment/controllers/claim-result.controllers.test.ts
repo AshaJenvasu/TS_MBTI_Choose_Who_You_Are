@@ -105,7 +105,7 @@ describe("POST /results/:resultId/claim — AC1 claim succeeds", () => {
     expect(body.mbtiType).toBe("ENFP");
 
     const list = await app.request("/results", { headers: { Cookie: alice.jar.header() } });
-    expect(await list.json()).toEqual([body]);
+    expect(((await list.json()) as { items: unknown[] }).items).toEqual([body]);
   });
 });
 

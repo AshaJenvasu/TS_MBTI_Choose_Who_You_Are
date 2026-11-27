@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   check,
   foreignKey,
+  index,
   integer,
   pgEnum,
   pgTable,
@@ -85,6 +86,15 @@ export const testResult = pgTable(
     check("test_result_sn_score_range", sql`${t.snScore} BETWEEN -12 AND 12`),
     check("test_result_tf_score_range", sql`${t.tfScore} BETWEEN -12 AND 12`),
     check("test_result_jp_score_range", sql`${t.jpScore} BETWEEN -12 AND 12`),
+    // GET /results: WHERE user_id = ? ORDER BY created_at DESC, id DESC LIMIT/OFFSET,
+    // read in index order (no Sort). Also serves the per-user COUNT.
+    // nullsFirst() is required: Drizzle defaults to NULLS LAST, but Postgres' plain DESC
+    // (what the query uses) means NULLS FIRST; a mismatch keeps a Sort node in the plan.
+    index("test_result_user_id_created_at_id_idx").on(
+      t.userId,
+      t.createdAt.desc().nullsFirst(),
+      t.id.desc().nullsFirst(),
+    ),
   ],
 );
 
