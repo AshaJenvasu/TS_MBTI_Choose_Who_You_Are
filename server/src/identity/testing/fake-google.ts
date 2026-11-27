@@ -73,8 +73,11 @@ export class CookieJar {
   store(res: Response) {
     for (const line of res.headers.getSetCookie()) {
       const [pair, ...attrs] = line.split(";");
+      // biome-ignore lint/style/noNonNullAssertion: String.split always returns at least one element
       const eq = pair!.indexOf("=");
+      // biome-ignore lint/style/noNonNullAssertion: String.split always returns at least one element
       const name = pair!.slice(0, eq).trim();
+      // biome-ignore lint/style/noNonNullAssertion: String.split always returns at least one element
       const value = pair!.slice(eq + 1).trim();
       const expired = attrs.some((a) => /^\s*max-age=0\s*$/i.test(a)) || value === "";
       if (expired) this.cookies.delete(name);
@@ -126,7 +129,9 @@ export function createTestClient(app: App) {
     const body = (await res.json()) as { url: string };
     const googleUrl = new URL(body.url);
     expect(googleUrl.origin).toBe("https://accounts.google.com");
-    return googleUrl.searchParams.get("state")!;
+    const state = googleUrl.searchParams.get("state");
+    if (state === null) throw new Error("Google authorize URL has no state parameter");
+    return state;
   }
 
   /** Full sign-in: start, approve on Google, Google redirects back with a code. */

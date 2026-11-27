@@ -34,5 +34,6 @@ export type NewTestResult = {
 /** Inserts one test_result row and returns its generated id. */
 export async function insertTestResult(db: Db, values: NewTestResult) {
   const [saved] = await db.insert(testResult).values(values).returning({ id: testResult.id });
+  // biome-ignore lint/style/noNonNullAssertion: single-row INSERT … RETURNING without ON CONFLICT returns exactly one row or throws
   return saved!.id;
 }

@@ -22,9 +22,13 @@ export function authConfigFromEnv(env = process.env): AuthConfig {
     throw new Error(`Missing auth env vars: ${missing.join(", ")}`);
   }
   return {
+    // biome-ignore lint/style/noNonNullAssertion: checked above: missing or empty vars throw before this line
     baseURL: env.BETTER_AUTH_URL!,
+    // biome-ignore lint/style/noNonNullAssertion: checked above: missing or empty vars throw before this line
     secret: env.BETTER_AUTH_SECRET!,
+    // biome-ignore lint/style/noNonNullAssertion: checked above: missing or empty vars throw before this line
     googleClientId: env.GOOGLE_CLIENT_ID!,
+    // biome-ignore lint/style/noNonNullAssertion: checked above: missing or empty vars throw before this line
     googleClientSecret: env.GOOGLE_CLIENT_SECRET!,
   };
 }

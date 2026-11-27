@@ -9,6 +9,7 @@ const QUESTION_IDS = new Set(QUESTIONS.map((q) => q.id));
 const EXAMPLE_VALUES = [1, 5, 2, 4, 4, 2, 4, 2, 5, 1, 3, 3, 2, 4, 1, 3, 5, 2, 2, 5, 1, 3, 4, 3];
 const EXAMPLE_ANSWERS = QUESTIONS.map((q, i) => ({
   questionId: q.id,
+  // biome-ignore lint/style/noNonNullAssertion: EXAMPLE_VALUES has one entry per question; question-bank.test.ts locks QUESTIONS at 24
   value: EXAMPLE_VALUES[i]!,
 }));
 

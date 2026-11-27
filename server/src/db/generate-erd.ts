@@ -32,6 +32,7 @@ function copyToClipboard(text: string) {
       : process.platform === "darwin"
         ? ["pbcopy"]
         : ["xclip", "-selection", "clipboard"];
+  // biome-ignore lint/style/noNonNullAssertion: every branch above is a non-empty array literal
   const res = spawnSync(cmd!, args, { input: text });
   return res.status === 0;
 }
@@ -43,5 +44,6 @@ function openBrowser(url: string) {
       : process.platform === "darwin"
         ? ["open", url]
         : ["xdg-open", url];
+  // biome-ignore lint/style/noNonNullAssertion: every branch above is a non-empty array literal
   spawnSync(cmd!, args, { stdio: "ignore" });
 }
