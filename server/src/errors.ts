@@ -15,6 +15,21 @@ export const UnauthorizedResponse = z
   })
   .openapi("UnauthorizedResponse");
 
+/**
+ * The one error body of the API: `{ error: { code, message } }` and nothing else.
+ * Generic so the code keeps its literal type ("INVALID_PAGE", not string). A route
+ * handler that returns it with a code the route's response schema does not list
+ * fails `tsc`. A `defaultHook` is NOT checked (zod-openapi types its return as
+ * `any`), so codes returned from hooks are guarded only by src/error-responses.test.ts.
+ * Knows no context's codes.
+ */
+export function errorBody<C extends string>(
+  code: C,
+  message: string,
+): { error: { code: C; message: string } } {
+  return { error: { code, message } };
+}
+
 /** Shape of the 500 response. Shared: any route can list it under `responses[500]`. */
 export const InternalServerErrorResponse = z
   .object({

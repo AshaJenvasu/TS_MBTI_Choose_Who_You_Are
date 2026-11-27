@@ -1,4 +1,5 @@
 import { createMiddleware } from "hono/factory";
+import { errorBody } from "../../errors";
 import type { Auth } from "../auth";
 
 export type AuthUser = Auth["$Infer"]["Session"]["user"];
@@ -7,12 +8,7 @@ export type AuthUser = Auth["$Infer"]["Session"]["user"];
 export type AuthEnv = { Variables: { user: AuthUser } };
 
 /** The only 401 body. Same for every reason, so it never hints why a session was refused. */
-export const UNAUTHORIZED_BODY = {
-  error: {
-    code: "UNAUTHORIZED" as const,
-    message: "Authentication required",
-  },
-};
+export const UNAUTHORIZED_BODY = errorBody("UNAUTHORIZED", "Authentication required");
 
 /**
  * Deny-by-default session check. Put it first, before any handler logic:

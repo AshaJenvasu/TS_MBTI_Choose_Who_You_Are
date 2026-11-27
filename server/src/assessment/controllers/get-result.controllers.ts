@@ -19,12 +19,7 @@ import {
   ResultNotFoundError,
   type ResultViewer,
 } from "../services/get-result.services";
-
-const badRequest = (code: "INVALID_RESULT_ID" | "AUTH_REQUIRED", message: string) => ({
-  error: { code, message },
-});
-
-const AUTH_REQUIRED_MESSAGE = "X-Guest-Token header is required";
+import { AUTH_REQUIRED_BODY, RESULT_NOT_FOUND_BODY, resultRequestHook } from "./result-errors";
 
 export function createGetResultRoutes(db: Db, auth?: Auth) {
   const optionalAuth = createOptionalAuth(auth);
@@ -63,19 +58,7 @@ export function createGetResultRoutes(db: Db, auth?: Auth) {
     },
   });
 
-  const routes = new OpenAPIHono<OptionalAuthEnv>({
-    defaultHook: (result, c) => {
-      if (result.success) return;
-      // `target` says which part of the request failed validation.
-      if (result.target === "header") {
-        return c.json(badRequest("AUTH_REQUIRED", AUTH_REQUIRED_MESSAGE), 400);
-      }
-      return c.json(
-        badRequest("INVALID_RESULT_ID", "resultId must be a valid UUID"),
-        400,
-      );
-    },
-  });
+  const routes = new OpenAPIHono<OptionalAuthEnv>({ defaultHook: resultRequestHook });
 
   routes.onError(globalErrorHandler);
 
@@ -89,23 +72,13 @@ export function createGetResultRoutes(db: Db, auth?: Auth) {
     let viewer: ResultViewer;
     if (guestToken !== undefined) viewer = { guestToken };
     else if (user) viewer = { userId: user.id };
-    else return c.json(badRequest("AUTH_REQUIRED", AUTH_REQUIRED_MESSAGE), 400);
+    else return c.json(AUTH_REQUIRED_BODY, 400);
 
     try {
       return c.json(await getResult(db, resultId, viewer), 200);
     } catch (err) {
       // Same status and body whether the result is missing or not yours.
-      if (err instanceof ResultNotFoundError) {
-        return c.json(
-          {
-            error: {
-              code: "RESULT_NOT_FOUND" as const,
-              message: "Result not found",
-            },
-          },
-          404,
-        );
-      }
+      if (err instanceof ResultNotFoundError) return c.json(RESULT_NOT_FOUND_BODY, 404);
       throw err;
     }
   });

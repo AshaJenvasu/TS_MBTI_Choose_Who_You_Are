@@ -43,3 +43,9 @@ BOUNDED CONTEXTS:
   - ล้างข้อมูลด้วย `clearTestData(pool)` (`src/db/testing/test-database.ts`) ซึ่งถาม `current_database()` ก่อนลบทุกครั้ง
   - `vitest.config.ts` ตั้ง `test.env.DATABASE_URL` เป็นฐาน test ให้โค้ดที่ยังอ่าน `DATABASE_URL` ข้างใน test ด้วย
 - ห้ามตั้ง `TEST_DATABASE_URL` บนระบบ deploy และห้ามรัน test ใน pipeline ที่ต่อฐานจริง
+
+## Dependency rules (lint:deps)
+
+- warning `missing-tsc-transpiler` ของ `bun run lint:deps` รู้แล้วและปลอดภัย: `tsPreCompilationDeps: true` ต้องใช้ tsc แต่ typescript 7.0 อยู่นอกช่วงที่ depcruise รองรับ ตัวที่แยก import จริงคือ swc (ตรวจแล้วว่าเห็นครบ รวม `import type`)
+- ห้ามเอา `tsPreCompilationDeps` ออกเพื่อกำจัด warning: ตอนนี้ swc นับ `import type` เองจึงไม่ต่าง แต่ถ้า depcruise ใช้ tsc ได้ (TS 7.1) การปิดจะทำให้ `import type` หายจากการตรวจ ถ้า TS 7.1 ออกและ depcruise เปลี่ยนไปใช้ tsc ให้รัน canary ใน `server/src/dependency-rules.test.ts` ยืนยันว่ายังจับ `import type` ได้ก่อนปรับ option ใดๆ
+- หลักฐาน: `.scratch/dependency-rules/HANDOFF.md` (session 2026-11-27) และ canary `server/src/dependency-rules.test.ts` ทบทวนเมื่อ typescript 7.1 ตัวจริงออก

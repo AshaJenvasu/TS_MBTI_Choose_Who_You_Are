@@ -1,7 +1,7 @@
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { HTTPException } from "hono/http-exception";
 import type { Db } from "../../db/client";
-import { globalErrorHandler, InternalServerErrorResponse } from "../../errors";
+import { errorBody, globalErrorHandler, InternalServerErrorResponse } from "../../errors";
 import type { Auth } from "../../identity/auth";
 import {
   createOptionalAuth,
@@ -15,9 +15,7 @@ import {
 } from "../schema/submit-test.schema";
 import { submitTest } from "../services/submit-test.services";
 
-const invalidAnswers = (message: string) => ({
-  error: { code: "INVALID_ANSWERS" as const, message },
-});
+const invalidAnswers = (message: string) => errorBody("INVALID_ANSWERS", message);
 
 export function createSubmitTestRoutes(db: Db, auth?: Auth) {
   const optionalAuth = createOptionalAuth(auth);

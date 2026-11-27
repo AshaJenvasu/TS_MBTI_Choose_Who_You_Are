@@ -16,10 +16,7 @@ import {
 import { ResultListItem } from "../schema/list-results.schema";
 import { claimResult } from "../services/claim-result.services";
 import { ResultNotFoundError } from "../services/get-result.services";
-
-const badRequest = (code: "INVALID_RESULT_ID" | "AUTH_REQUIRED", message: string) => ({
-  error: { code, message },
-});
+import { RESULT_NOT_FOUND_BODY, resultRequestHook } from "./result-errors";
 
 export function createClaimResultRoutes(db: Db, auth: Auth) {
   const requireAuth = createRequireAuth(auth);
@@ -60,16 +57,8 @@ export function createClaimResultRoutes(db: Db, auth: Auth) {
     },
   });
 
-  const routes = new OpenAPIHono<AuthEnv>({
-    defaultHook: (result, c) => {
-      if (result.success) return;
-      // Same 400s as GET /results/:resultId.
-      if (result.target === "header") {
-        return c.json(badRequest("AUTH_REQUIRED", "X-Guest-Token header is required"), 400);
-      }
-      return c.json(badRequest("INVALID_RESULT_ID", "resultId must be a valid UUID"), 400);
-    },
-  });
+  // Same 400s as GET /results/:resultId (shared hook).
+  const routes = new OpenAPIHono<AuthEnv>({ defaultHook: resultRequestHook });
 
   routes.onError(globalErrorHandler);
 
@@ -81,12 +70,7 @@ export function createClaimResultRoutes(db: Db, auth: Auth) {
     try {
       return c.json(await claimResult(db, resultId, c.get("user").id, guestToken), 200);
     } catch (err) {
-      if (err instanceof ResultNotFoundError) {
-        return c.json(
-          { error: { code: "RESULT_NOT_FOUND" as const, message: "Result not found" } },
-          404,
-        );
-      }
+      if (err instanceof ResultNotFoundError) return c.json(RESULT_NOT_FOUND_BODY, 404);
       throw err;
     }
   });
