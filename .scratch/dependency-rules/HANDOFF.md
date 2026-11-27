@@ -42,3 +42,25 @@
 1. Review + commit H2
 2. (ถ้าต้องการ) ลบ npx cache `a5f588f01cc4cc70`
 3. Epic 2 Feature B, Ticket B1 — claim guest result
+
+## Session 2026-11-27 — สืบสวน warning `missing-tsc-transpiler` (อ่านอย่างเดียว)
+
+### การตัดสินใจ
+- **ทางเลือก A (ผู้ใช้เลือก)**: ไม่แก้ บันทึกไว้ว่าเป็น warning ที่รู้แล้ว ผล `lint:deps` ยังเชื่อถือได้สำหรับ 5 rule ที่ตั้งไว้
+
+### หลักฐาน (HEAD `ad082a9`)
+- เวอร์ชัน: typescript 7.0.2, dependency-cruiser 18.9.0 (= `latest` บน npm), @swc/core 1.16.22, bun 1.4.2 ช่วงที่ depcruise รองรับ (`src/meta.cjs`) คือ `typescript: >=2.0.0 <7.0.0||>=7.1.0 <8.0.0`
+- **สาเหตุ**:
+  - `tsPreCompilationDeps: true` (`.dependency-cruiser.cjs:59`) ทำให้ตัวเช็กต้องการ tsc (`verify-environment.mjs:26-36`) แต่ tsc ใช้ไม่ได้
+  - ตัวแยก import จริงคือ swc (`extract-dependencies.mjs:43-48`) ซึ่งบันทึก `import type` เป็น `type-only` ได้เองอยู่แล้ว (`swc/dependency-visitor.mjs:121-160`)
+- **ผลจาก JSON**:
+  - ไฟล์ใน src ถูก cruise ครบ 54/54
+  - import ภายในที่ resolve ไม่ได้ = 0
+  - dependency แบบ `type-only` = 30
+  - เทียบ grep กับ depcruise 3 ไฟล์ (`list-results.controllers.ts`, `identity/middleware/require-auth.ts`, `claim-result.services.ts`) ตรงทุก import ภายใน
+- **ช่องว่างที่รู้แล้ว**: import แบบ subpath ของ npm 5 ตัว resolve ไม่ได้ (`hono/http-exception` ×2, `hono/factory` ×2, `better-auth/adapters/drizzle`) ไม่กระทบ rule เพราะทุก rule จับเฉพาะ path ใต้ `src/`
+- **Canary ที่รองรับผล**: `server/src/dependency-rules.test.ts` (51 เคส) รันในชุด `bun run test` ทุกครั้ง
+
+### ทบทวนเมื่อ
+- typescript 7.1.0 ตัวจริงออก (ตอนนี้มีแค่ `7.1.0-beta` และ dev) ให้อัปเกรดแล้วดูว่า warning หายไหม หรือ
+- ถ้าวันหน้าอยากให้ warning หาย ให้พิจารณาเอา `tsPreCompilationDeps: true` ออก แต่ต้องรัน canary 51 เคสยืนยันก่อน (ยังไม่ verify)
