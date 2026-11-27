@@ -32,3 +32,15 @@ AC6 ไฟล์ generated และ .scratch ไม่ถูกแก้ (ย�
 AC7 scripts ครบ และ verify ล้มจริงเมื่อมีขั้นใดล้ม (พิสูจน์ด้วยกรณีชั่วคราวแล้วย้อนกลับ)
 AC8 line ending: ไฟล์ .ts ในขอบเขตเป็น LF ทั้งหมดใน working tree (git ls-files --eol) ไม่มี mixed
 === END TICKET ===
+
+## สถานะ (อัปเดต 2026-11-27, Phase D)
+- [x] AC1 ติดตั้ง Biome 2.6.9 exact และ `biome.json` ใช้ `preset` ไม่มี deprecation warning
+- [x] AC2 `bun run check` exit 0, 0 error 0 warning (หลังก้อน ③)
+- [x] AC3 format ล้วน: AST เทียบเท่า 37/37 (control 7/7), test 351, tsc 0, lint:deps 77/222, OpenAPI `5277437e…` ตรง
+- [x] AC4 `noFloatingPromises`: เจอ 0 จุดใน repo, canary จับเคส async ที่ไม่ await ได้ (รวมข้ามไฟล์) · ข้อจำกัด: ไม่จับ Drizzle builder และ thenable class (จดใน CLAUDE.md และ HANDOFF)
+- [x] AC5 ตาราง 12 จุด `!` อยู่ใน HANDOFF
+- [x] AC6 ไฟล์ generated, `.scratch`, `docs`, `.claude` ไม่ถูกแก้ใน ①–③ (เทียบ sha256 แล้ว) ยกเว้น `package.json` และ `bun.lock`
+- [x] AC7 มี scripts ครบ และ `verify` หยุดที่ขั้นที่ล้มจริง (Phase A ล้มที่ check โดยไม่รันขั้นถัดไป)
+- [x] AC8 ไฟล์ .ts ในขอบเขตทั้ง 59 ไฟล์เป็น `w/lf`
+- ส่วนที่เบี่ยงจากแผนเดิม: `fake-google.ts:129` (`get("state")!`) ตอนแรกจะรายงานเป็น finding อย่างเดียว แต่ผู้ใช้เลือกตัวเลือก B ให้แก้ด้วย `if (state === null) throw …` ในก้อน ③ และพิสูจน์ด้วย M3 แล้ว
+- commit: ① `2872419` ② `27af46c` ③ `01a123f` ④ รอผู้ใช้

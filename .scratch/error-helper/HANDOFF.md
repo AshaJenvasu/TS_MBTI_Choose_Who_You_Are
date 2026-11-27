@@ -110,3 +110,6 @@
 
 ### ขั้นต่อไป
 1. ผู้ใช้รีวิวแล้ว commit เอง (รวม `.claude/CLAUDE.md` หัวข้อ lint:deps ที่ค้างจาก Phase 0)
+
+## Note 2026-11-27 (H5)
+- sha256 ของ `server/src/error-responses.test.ts` เปลี่ยนจาก `aaaf0eec904a2ccc14dfde7cfca9bf45dcee2f084e9546c9469bb0ee80c321e2` เป็น `f8acb48089d1911f523fb042e271c93d571b7e47681da779c83c9c584c61495b` เพราะ Biome format เท่านั้น (commit `27af46c` พิสูจน์แล้วว่า AST เทียบเท่า ดู `.scratch/tooling-biome/HANDOFF.md`)

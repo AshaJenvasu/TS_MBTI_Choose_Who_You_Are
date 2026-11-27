@@ -49,3 +49,14 @@ BOUNDED CONTEXTS:
 - warning `missing-tsc-transpiler` ของ `bun run lint:deps` รู้แล้วและปลอดภัย: `tsPreCompilationDeps: true` ต้องใช้ tsc แต่ typescript 7.0 อยู่นอกช่วงที่ depcruise รองรับ ตัวที่แยก import จริงคือ swc (ตรวจแล้วว่าเห็นครบ รวม `import type`)
 - ห้ามเอา `tsPreCompilationDeps` ออกเพื่อกำจัด warning: ตอนนี้ swc นับ `import type` เองจึงไม่ต่าง แต่ถ้า depcruise ใช้ tsc ได้ (TS 7.1) การปิดจะทำให้ `import type` หายจากการตรวจ ถ้า TS 7.1 ออกและ depcruise เปลี่ยนไปใช้ tsc ให้รัน canary ใน `server/src/dependency-rules.test.ts` ยืนยันว่ายังจับ `import type` ได้ก่อนปรับ option ใดๆ
 - หลักฐาน: `.scratch/dependency-rules/HANDOFF.md` (session 2026-11-27) และ canary `server/src/dependency-rules.test.ts` ทบทวนเมื่อ typescript 7.1 ตัวจริงออก
+
+## Lint & format (Biome)
+
+- **Definition of Done ของ backend**: `cd server && bun run verify` ต้องเขียว (check → typecheck → lint:deps → test หยุดทันทีที่ขั้นใดล้ม) แก้ format ด้วย `bun run check:fix`
+- `noExplicitAny` และ `noNonNullAssertion` เป็น error ใน production ปิดใน `**/*.test.ts` ถ้าจะใช้ `biome-ignore` ต้องมีเหตุผลที่ตรวจสอบได้อยู่ในคอมเมนต์บรรทัดเดียวกัน
+- `noFloatingPromises` (nursery) จับการลืม `await` ของ async function ได้ รวมข้ามไฟล์ (พิสูจน์แล้ว) แต่**ไม่จับ** query builder ของ Drizzle และ class ที่เป็น thenable
+  - กติกา: เรียก Drizzle builder เฉพาะใน repository function และ `await` ตรงจุดที่สร้างเสมอ
+  - ห้ามปิดกฎนี้: ถ้าลืม `await claimGuestResult` ใน transaction ไม่มี test ไหนจับได้ มีแค่ Biome
+- `void promise` ผ่านกฎได้ (ยังไม่ห้าม)
+- ESLint: ยังไม่ใช้ เพราะ typescript-eslint ไม่รองรับ TS 7.0.2 ให้ประเมินใหม่เมื่อ TS 7.1 stable และ typescript-eslint รองรับ (trigger เดียวกับหมายเหตุ depcruise)
+- หลักฐาน: `.scratch/tooling-biome/HANDOFF.md`
