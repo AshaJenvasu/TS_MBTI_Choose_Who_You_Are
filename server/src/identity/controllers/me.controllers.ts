@@ -45,7 +45,8 @@ export function createMeRoutes(auth: Auth) {
     type: "apiKey",
     in: "cookie",
     name: "better-auth.session_token",
-    description: "Set by Google sign-in at /api/auth/*. Named __Secure-better-auth.session_token over https.",
+    description:
+      "Set by Google sign-in at /api/auth/*. Named __Secure-better-auth.session_token over https.",
   });
 
   return routes.openapi(meRoute, (c) => c.json(toMe(c.get("user")), 200));

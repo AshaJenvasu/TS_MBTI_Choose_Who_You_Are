@@ -1,11 +1,6 @@
 import { asc, eq } from "drizzle-orm";
 import type { Db } from "../../db/client";
-import {
-  character,
-  mbtiTypeCompatibility,
-  mbtiTypeInfo,
-  testResult,
-} from "./schema";
+import { character, mbtiTypeCompatibility, mbtiTypeInfo, testResult } from "./schema";
 
 /** A test result joined with its character and type info, or undefined if no such id. */
 export async function findResultWithTypeInfoById(db: Db, resultId: string) {

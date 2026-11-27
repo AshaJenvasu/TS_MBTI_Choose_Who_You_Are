@@ -14,10 +14,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { user } from "../../identity/repositories/schema";
 
-export const compatibilityKind = pgEnum("compatibility_kind", [
-  "compatible",
-  "challenging",
-]);
+export const compatibilityKind = pgEnum("compatibility_kind", ["compatible", "challenging"]);
 
 export const mbtiTypeInfo = pgTable(
   "mbti_type_info",
@@ -32,10 +29,7 @@ export const mbtiTypeInfo = pgTable(
       foreignColumns: [t.typeCode],
       name: "mbti_type_info_golden_pair_type_fk",
     }),
-    check(
-      "mbti_type_info_golden_pair_not_self",
-      sql`${t.goldenPairType} <> ${t.typeCode}`,
-    ),
+    check("mbti_type_info_golden_pair_not_self", sql`${t.goldenPairType} <> ${t.typeCode}`),
   ],
 );
 
@@ -67,9 +61,7 @@ export const testResult = pgTable(
     matchedCharacterId: integer("matched_character_id")
       .notNull()
       .references(() => character.id),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     // Net score per axis from scoreAxes(): (first letter) - (second letter), -12..+12.
     // Kept instead of the 24 raw answers: enough to show the % breakdown again later.
     eiScore: integer("ei_score").notNull(),
@@ -78,10 +70,7 @@ export const testResult = pgTable(
     jpScore: integer("jp_score").notNull(),
   },
   (t) => [
-    check(
-      "test_result_user_or_guest",
-      sql`${t.userId} IS NOT NULL OR ${t.guestToken} IS NOT NULL`,
-    ),
+    check("test_result_user_or_guest", sql`${t.userId} IS NOT NULL OR ${t.guestToken} IS NOT NULL`),
     check("test_result_ei_score_range", sql`${t.eiScore} BETWEEN -12 AND 12`),
     check("test_result_sn_score_range", sql`${t.snScore} BETWEEN -12 AND 12`),
     check("test_result_tf_score_range", sql`${t.tfScore} BETWEEN -12 AND 12`),
@@ -113,9 +102,6 @@ export const mbtiTypeCompatibility = pgTable(
   (t) => [
     // One row per (type_code, other_type): a pair is compatible OR challenging, never both.
     primaryKey({ columns: [t.typeCode, t.otherType] }),
-    check(
-      "mbti_type_compatibility_not_self",
-      sql`${t.otherType} <> ${t.typeCode}`,
-    ),
+    check("mbti_type_compatibility_not_self", sql`${t.otherType} <> ${t.typeCode}`),
   ],
 );

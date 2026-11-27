@@ -41,8 +41,7 @@ export function createSubmitTestRoutes(db: Db, auth?: Auth) {
         content: { "application/json": { schema: SubmitTestResponse } },
       },
       400: {
-        description:
-          "Answers are not exactly the 24 question ids with a 1-5 value each",
+        description: "Answers are not exactly the 24 question ids with a 1-5 value each",
         content: { "application/json": { schema: InvalidAnswersResponse } },
       },
       500: {
@@ -57,10 +56,7 @@ export function createSubmitTestRoutes(db: Db, auth?: Auth) {
       if (!result.success) {
         const issue = result.error.issues[0];
         const where = issue?.path.length ? `${issue.path.join(".")}: ` : "";
-        return c.json(
-          invalidAnswers(`${where}${issue?.message ?? "Invalid request body"}`),
-          400,
-        );
+        return c.json(invalidAnswers(`${where}${issue?.message ?? "Invalid request body"}`), 400);
       }
     },
   });
@@ -78,9 +74,7 @@ export function createSubmitTestRoutes(db: Db, auth?: Auth) {
     const { answers } = c.req.valid("json");
     // Owner comes from the session only (API1): never from the body or headers.
     const user = c.get("user");
-    const owner = user
-      ? { userId: user.id }
-      : { guestToken: crypto.randomUUID() };
+    const owner = user ? { userId: user.id } : { guestToken: crypto.randomUUID() };
     const result = await submitTest(db, answers, owner);
     return c.json(result, 201);
   });

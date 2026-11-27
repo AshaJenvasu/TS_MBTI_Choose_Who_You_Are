@@ -10,7 +10,10 @@ import { character, mbtiTypeCompatibility, mbtiTypeInfo } from "./schema";
  */
 export async function seedReferenceData(db: NodePgDatabase): Promise<void> {
   // Insert order matters: types first, since everything else references them.
-  await db.insert(mbtiTypeInfo).values([...MBTI_TYPES]).onConflictDoNothing();
+  await db
+    .insert(mbtiTypeInfo)
+    .values([...MBTI_TYPES])
+    .onConflictDoNothing();
   await db.insert(character).values(CHARACTERS).onConflictDoNothing();
   await db.insert(mbtiTypeCompatibility).values(COMPATIBILITY).onConflictDoNothing();
 }

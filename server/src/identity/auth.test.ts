@@ -71,9 +71,7 @@ describe("Google sign-in — AC1 first sign-in creates an account", () => {
     expect(await count("account")).toBe(1);
     expect(await count("session")).toBe(1);
 
-    const { rows } = await pool.query(
-      `select provider_id, account_id from account`,
-    );
+    const { rows } = await pool.query(`select provider_id, account_id from account`);
     expect(rows[0]).toEqual({ provider_id: "google", account_id: ALICE.sub });
 
     const session = await getSession(jar);
@@ -254,7 +252,7 @@ describe("Schema — AC5 test_result.user_id references Identity's user table", 
       [userId],
     );
 
-  it("the FK points at \"user\".id (text) with ON DELETE RESTRICT", async () => {
+  it('the FK points at "user".id (text) with ON DELETE RESTRICT', async () => {
     const { rows } = await pool.query(
       `select ccu.table_name as ref_table, ccu.column_name as ref_column, rc.delete_rule,
               (select data_type from information_schema.columns

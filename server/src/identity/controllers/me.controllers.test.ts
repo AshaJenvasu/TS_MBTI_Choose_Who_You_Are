@@ -176,14 +176,10 @@ describe("GET /api/me — session check fails (e.g. DB down)", () => {
 describe("requireAuth — AC4 reusable on any route", () => {
   // A second route, built only here, protected by the same middleware.
   let handlerRuns = 0;
-  const other = new Hono<AuthEnv>().get(
-    "/test-only/protected",
-    createRequireAuth(auth),
-    (c) => {
-      handlerRuns++;
-      return c.json({ userId: c.get("user").id });
-    },
-  );
+  const other = new Hono<AuthEnv>().get("/test-only/protected", createRequireAuth(auth), (c) => {
+    handlerRuns++;
+    return c.json({ userId: c.get("user").id });
+  });
 
   beforeEach(() => {
     handlerRuns = 0;

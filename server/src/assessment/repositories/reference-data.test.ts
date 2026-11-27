@@ -15,9 +15,7 @@ async function rows<T extends pg.QueryResultRow>(sql: string): Promise<T[]> {
 
 describe("MbtiTypeInfo reference data", () => {
   it("has exactly 16 rows", async () => {
-    const [r] = await rows<{ n: number }>(
-      `select count(*)::int as n from mbti_type_info`,
-    );
+    const [r] = await rows<{ n: number }>(`select count(*)::int as n from mbti_type_info`);
     expect(r?.n).toBe(16);
   });
 
@@ -201,8 +199,9 @@ describe("MbtiTypeCompatibility constraints (Hardening H1)", () => {
 
   it("kind stays NOT NULL (it is no longer part of the PK) → 23502", async () => {
     // INFJ → ENFP (golden pair) has no row, so only NOT NULL can reject this.
-    await expect(
-      insertCompatibilityThenRollback("INFJ", "ENFP", null),
-    ).rejects.toMatchObject({ code: "23502", column: "kind" });
+    await expect(insertCompatibilityThenRollback("INFJ", "ENFP", null)).rejects.toMatchObject({
+      code: "23502",
+      column: "kind",
+    });
   });
 });

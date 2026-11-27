@@ -16,7 +16,10 @@ import {
 import { listResults } from "../services/list-results.services";
 import { MAX_PAGE } from "../services/pagination";
 
-const INVALID_PAGE_BODY = errorBody("INVALID_PAGE", `page must be an integer from 1 to ${MAX_PAGE}`);
+const INVALID_PAGE_BODY = errorBody(
+  "INVALID_PAGE",
+  `page must be an integer from 1 to ${MAX_PAGE}`,
+);
 
 export function createListResultsRoutes(db: Db, auth: Auth) {
   const requireAuth = createRequireAuth(auth);

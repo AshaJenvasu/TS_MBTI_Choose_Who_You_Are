@@ -17,7 +17,9 @@ export function testDatabaseUrl(): string {
   // Cheap re-check of the name; the real guard is clearTestData asking Postgres.
   const name = databaseNameOf(url);
   if (!isTestDatabaseName(name)) {
-    throw new Error(`Refusing to use database "${name}" for tests: the name must end with "_test".`);
+    throw new Error(
+      `Refusing to use database "${name}" for tests: the name must end with "_test".`,
+    );
   }
   return url;
 }

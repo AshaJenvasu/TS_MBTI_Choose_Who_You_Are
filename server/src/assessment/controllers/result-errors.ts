@@ -6,7 +6,10 @@ import { errorBody } from "../../errors";
 // POST /results/{resultId}/claim. Assessment vocabulary, so it lives here, not in src/errors.ts.
 
 export const AUTH_REQUIRED_BODY = errorBody("AUTH_REQUIRED", "X-Guest-Token header is required");
-export const INVALID_RESULT_ID_BODY = errorBody("INVALID_RESULT_ID", "resultId must be a valid UUID");
+export const INVALID_RESULT_ID_BODY = errorBody(
+  "INVALID_RESULT_ID",
+  "resultId must be a valid UUID",
+);
 
 /** Same status and body whether the result is missing or not yours. */
 export const RESULT_NOT_FOUND_BODY = errorBody("RESULT_NOT_FOUND", "Result not found");

@@ -30,10 +30,9 @@ let googleUser: GoogleProfile = ALICE;
 async function signInAs(who: GoogleProfile) {
   googleUser = who;
   const { jar } = await client.signIn();
-  const { rows } = await pool.query<{ id: string }>(
-    `select id from "user" where email = $1`,
-    [who.email],
-  );
+  const { rows } = await pool.query<{ id: string }>(`select id from "user" where email = $1`, [
+    who.email,
+  ]);
   return { jar, userId: rows[0]!.id };
 }
 
@@ -77,8 +76,7 @@ async function expectedFor(mbtiType: string) {
      where type_code = $1 order by other_type`,
     [mbtiType],
   );
-  const of = (kind: string) =>
-    compat.rows.filter((r) => r.kind === kind).map((r) => r.other_type);
+  const of = (kind: string) => compat.rows.filter((r) => r.kind === kind).map((r) => r.other_type);
   return {
     row: info.rows[0],
     compatible: of("compatible"),
@@ -129,11 +127,7 @@ describe("GET /results/:resultId — AC1 owner sees the result", () => {
       "mbtiType",
     ]);
     expect(body.mbtiType).toBe("ENFP");
-    expect(Object.keys(body.character).sort()).toEqual([
-      "description",
-      "imageUrl",
-      "name",
-    ]);
+    expect(Object.keys(body.character).sort()).toEqual(["description", "imageUrl", "name"]);
     expect(body.character).toEqual({
       name: expected.row.name,
       imageUrl: expected.row.image_url,
@@ -188,17 +182,19 @@ describe("GET /results/:resultId — AC1 owner sees the result", () => {
 });
 
 describe("GET /results/:resultId — AC2 resultId is not a UUID", () => {
-  it.each([["not-a-uuid"], ["123"], ["11111111-1111-4111-8111-11111111111g"], ["11111111-1111-4111-8111-1111111111111"]])(
-    "%s → 400 INVALID_RESULT_ID",
-    async (badId) => {
-      const res = await get(badId, OWNER_TOKEN);
-      expect(res.status).toBe(400);
-      const json = await res.json();
-      expect(Object.keys(json)).toEqual(["error"]);
-      expect(json.error.code).toBe("INVALID_RESULT_ID");
-      expect(json.error.message.length).toBeGreaterThan(0);
-    },
-  );
+  it.each([
+    ["not-a-uuid"],
+    ["123"],
+    ["11111111-1111-4111-8111-11111111111g"],
+    ["11111111-1111-4111-8111-1111111111111"],
+  ])("%s → 400 INVALID_RESULT_ID", async (badId) => {
+    const res = await get(badId, OWNER_TOKEN);
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(Object.keys(json)).toEqual(["error"]);
+    expect(json.error.code).toBe("INVALID_RESULT_ID");
+    expect(json.error.message.length).toBeGreaterThan(0);
+  });
 
   it("bad resultId with no X-Guest-Token and no session → 400 INVALID_RESULT_ID (not AUTH_REQUIRED)", async () => {
     // Since Epic 2 A3 the header is optional, so the param check wins over the missing credential.
@@ -238,9 +234,7 @@ describe("GET /results/:resultId — AC4 someone else's result (BOLA)", () => {
     expect(notYours.status).toBe(404);
     expect(notYours.status).toBe(missing.status);
     expect(await notYours.text()).toBe(await missing.text());
-    expect(notYours.headers.get("content-type")).toBe(
-      missing.headers.get("content-type"),
-    );
+    expect(notYours.headers.get("content-type")).toBe(missing.headers.get("content-type"));
   });
 
   it("a result owned by a user id (no guest token) is also 404 for any token", async () => {

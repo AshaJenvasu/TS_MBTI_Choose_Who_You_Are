@@ -4,10 +4,31 @@ import { MAX_NET_SCORE, netScoreToPercentage, toBreakdown } from "./breakdown";
 // Hand-computed: % of the first letter = 50 + (net / 24 * 100 rounded half away from 50).
 // 100/24 = 4.1666…: net n → 50 + n·4.1666… → nearest integer, ties (.5) away from 50.
 const EXPECTED: Record<number, number> = {
-  [-12]: 0, [-11]: 4, [-10]: 8, [-9]: 12, [-8]: 17, [-7]: 21, [-6]: 25,
-  [-5]: 29, [-4]: 33, [-3]: 37, [-2]: 42, [-1]: 46, 0: 50,
-  1: 54, 2: 58, 3: 63, 4: 67, 5: 71, 6: 75,
-  7: 79, 8: 83, 9: 88, 10: 92, 11: 96, 12: 100,
+  [-12]: 0,
+  [-11]: 4,
+  [-10]: 8,
+  [-9]: 12,
+  [-8]: 17,
+  [-7]: 21,
+  [-6]: 25,
+  [-5]: 29,
+  [-4]: 33,
+  [-3]: 37,
+  [-2]: 42,
+  [-1]: 46,
+  0: 50,
+  1: 54,
+  2: 58,
+  3: 63,
+  4: 67,
+  5: 71,
+  6: 75,
+  7: 79,
+  8: 83,
+  9: 88,
+  10: 92,
+  11: 96,
+  12: 100,
 };
 
 describe("netScoreToPercentage — AC4 boundary values", () => {

@@ -14,7 +14,15 @@ const answers = (...groups: [number[], number[], number[], number[]]) =>
   groups.flat().map((value, i) => ({ questionId: i + 1, value }));
 
 const NEUTRAL = [3, 3, 3, 3, 3, 3];
-const all = (value: number) => answers(...([0, 1, 2, 3].map(() => Array<number>(6).fill(value)) as [number[], number[], number[], number[]]));
+const all = (value: number) =>
+  answers(
+    ...([0, 1, 2, 3].map(() => Array<number>(6).fill(value)) as [
+      number[],
+      number[],
+      number[],
+      number[],
+    ]),
+  );
 
 describe("likertToWeight", () => {
   it.each([

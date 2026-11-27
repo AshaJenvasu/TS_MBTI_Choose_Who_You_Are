@@ -50,10 +50,9 @@ afterAll(async () => {
 async function signInAs(who: GoogleProfile) {
   googleUser = who;
   const { jar } = await client.signIn();
-  const { rows } = await pool.query<{ id: string }>(
-    `select id from "user" where email = $1`,
-    [who.email],
-  );
+  const { rows } = await pool.query<{ id: string }>(`select id from "user" where email = $1`, [
+    who.email,
+  ]);
   return { jar, userId: rows[0]!.id };
 }
 

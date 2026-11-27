@@ -68,7 +68,10 @@ const violatingFile = (rule: RuleName, form: Form) =>
 // Allowed by the Context Map: must never be reported.
 const CONTROLS = {
   "sharing/acl -> assessment": { file: "src/sharing/acl/adapter.ts", to: TARGET.assessment },
-  "sharing -> assessment/public": { file: "src/sharing/uses-public.ts", to: TARGET.assessmentPublic },
+  "sharing -> assessment/public": {
+    file: "src/sharing/uses-public.ts",
+    to: TARGET.assessmentPublic,
+  },
   "assessment -> identity": { file: "src/assessment/uses-identity.ts", to: TARGET.identity },
 } as const;
 
@@ -111,7 +114,10 @@ function depcruise(cwd: string, outputType?: "json") {
 
 type CruiseResult = {
   modules: { source: string }[];
-  summary: { error: number; violations: { from: string; rule: { name: string; severity: string } }[] };
+  summary: {
+    error: number;
+    violations: { from: string; rule: { name: string; severity: string } }[];
+  };
 };
 
 const tmpRoots: string[] = [];
@@ -151,8 +157,9 @@ afterAll(() => {
   for (const dir of tmpRoots) rmSync(dir, { recursive: true, force: true });
 });
 
-const rulesFiredFrom = (json: CruiseResult, file: string) =>
-  [...new Set(json.summary.violations.filter((v) => v.from === file).map((v) => v.rule.name))];
+const rulesFiredFrom = (json: CruiseResult, file: string) => [
+  ...new Set(json.summary.violations.filter((v) => v.from === file).map((v) => v.rule.name)),
+];
 
 describe("dependency rules — every import form is caught, per rule", () => {
   const cases = (Object.keys(RULES) as RuleName[]).flatMap((rule) =>

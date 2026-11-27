@@ -122,9 +122,9 @@ describe("resolveTestDatabaseUrl — picks the test URL from the ORIGINAL env va
   it("TEST_DATABASE_URL set to a *_test database → that URL as is", () => {
     const wanted = urlFor("other_test");
 
-    expect(resolveTestDatabaseUrl({ TEST_DATABASE_URL: wanted, DATABASE_URL: urlFor("mbti") })).toBe(
-      wanted,
-    );
+    expect(
+      resolveTestDatabaseUrl({ TEST_DATABASE_URL: wanted, DATABASE_URL: urlFor("mbti") }),
+    ).toBe(wanted);
   });
 
   it("TEST_DATABASE_URL points at a name that does not end with _test (e.g. the dev db) → throws", () => {
@@ -143,9 +143,9 @@ describe("resolveTestDatabaseUrl — picks the test URL from the ORIGINAL env va
   });
 
   it("the default is checked too: DATABASE_URL (original value) already points at mbti_test → throws", () => {
-    expect(() => resolveTestDatabaseUrl({ DATABASE_URL: urlFor("mbti_test", "localhost") })).toThrow(
-      /"mbti_test".*DATABASE_URL/,
-    );
+    expect(() =>
+      resolveTestDatabaseUrl({ DATABASE_URL: urlFor("mbti_test", "localhost") }),
+    ).toThrow(/"mbti_test".*DATABASE_URL/);
   });
 
   it("reads the name from the URL path only: ?sslmode=require on mbti_test → accepted", () => {
@@ -154,10 +154,10 @@ describe("resolveTestDatabaseUrl — picks the test URL from the ORIGINAL env va
     expect(resolveTestDatabaseUrl({ TEST_DATABASE_URL: wanted })).toBe(wanted);
   });
 
-  it("a query string cannot fake the suffix: /mbti?note=_test → throws for \"mbti\"", () => {
-    expect(() => resolveTestDatabaseUrl({ TEST_DATABASE_URL: `${urlFor("mbti")}?note=_test` })).toThrow(
-      refused("mbti"),
-    );
+  it('a query string cannot fake the suffix: /mbti?note=_test → throws for "mbti"', () => {
+    expect(() =>
+      resolveTestDatabaseUrl({ TEST_DATABASE_URL: `${urlFor("mbti")}?note=_test` }),
+    ).toThrow(refused("mbti"));
   });
 
   it.each([

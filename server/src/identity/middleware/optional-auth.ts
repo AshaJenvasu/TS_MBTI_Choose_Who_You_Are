@@ -25,9 +25,7 @@ export type OptionalAuthEnv = { Variables: { user: AuthUser | null } };
  */
 export function createOptionalAuth(auth?: Auth) {
   return createMiddleware<OptionalAuthEnv>(async (c, next) => {
-    const session = auth
-      ? await auth.api.getSession({ headers: c.req.raw.headers })
-      : null;
+    const session = auth ? await auth.api.getSession({ headers: c.req.raw.headers }) : null;
     c.set("user", session?.user ?? null);
     await next();
   });

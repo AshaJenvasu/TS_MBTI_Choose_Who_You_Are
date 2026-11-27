@@ -32,8 +32,7 @@ export function createClaimResultRoutes(db: Db, auth: Auth) {
     request: { params: GetResultParams, headers: ClaimResultHeaders },
     responses: {
       200: {
-        description:
-          "Claimed (or already claimed by this user: a retry returns the same result)",
+        description: "Claimed (or already claimed by this user: a retry returns the same result)",
         content: { "application/json": { schema: ResultListItem } },
       },
       400: {

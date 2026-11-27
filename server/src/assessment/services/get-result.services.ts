@@ -64,12 +64,8 @@ export async function getResult(
     },
     house: row.house,
     goldenPair: row.goldenPairType,
-    compatibleTypes: compatibility
-      .filter((c) => c.kind === "compatible")
-      .map((c) => c.otherType),
-    challengingTypes: compatibility
-      .filter((c) => c.kind === "challenging")
-      .map((c) => c.otherType),
+    compatibleTypes: compatibility.filter((c) => c.kind === "compatible").map((c) => c.otherType),
+    challengingTypes: compatibility.filter((c) => c.kind === "challenging").map((c) => c.otherType),
     // From the stored net scores (raw answers are not kept), so it matches submit exactly.
     breakdown: toBreakdown({
       EI: row.eiScore,

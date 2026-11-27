@@ -51,13 +51,10 @@ export const COMPATIBILITY: CompatibilityRow[] = MBTI_TYPES.flatMap((a) =>
     const isGolden = a.goldenPairType === b.typeCode;
     if (isSelf || isGolden) return [];
 
-    const sameMiddle =
-      a.typeCode[1] === b.typeCode[1] && a.typeCode[2] === b.typeCode[2];
-    const oppositeMiddle =
-      a.typeCode[1] !== b.typeCode[1] && a.typeCode[2] !== b.typeCode[2];
+    const sameMiddle = a.typeCode[1] === b.typeCode[1] && a.typeCode[2] === b.typeCode[2];
+    const oppositeMiddle = a.typeCode[1] !== b.typeCode[1] && a.typeCode[2] !== b.typeCode[2];
 
-    if (sameMiddle)
-      return [{ typeCode: a.typeCode, otherType: b.typeCode, kind: "compatible" }];
+    if (sameMiddle) return [{ typeCode: a.typeCode, otherType: b.typeCode, kind: "compatible" }];
     if (oppositeMiddle)
       return [{ typeCode: a.typeCode, otherType: b.typeCode, kind: "challenging" }];
     return [];

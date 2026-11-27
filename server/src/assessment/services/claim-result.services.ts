@@ -1,8 +1,5 @@
 import type { Db } from "../../db/client";
-import {
-  claimGuestResult,
-  findOwnedResultItem,
-} from "../repositories/claim-result.repository";
+import { claimGuestResult, findOwnedResultItem } from "../repositories/claim-result.repository";
 import { ResultNotFoundError } from "./get-result.services";
 import { type ResultListItem, toResultListItem } from "./list-results.services";
 

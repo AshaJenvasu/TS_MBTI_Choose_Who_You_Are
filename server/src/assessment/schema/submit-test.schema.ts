@@ -6,9 +6,7 @@ const QUESTION_IDS = new Set(QUESTIONS.map((q) => q.id));
 
 // Example body for docs UIs (Scalar generates a broken one otherwise: every
 // questionId = 1). One value per question, in id order; this set scores ISFP.
-const EXAMPLE_VALUES = [
-  1, 5, 2, 4, 4, 2, 4, 2, 5, 1, 3, 3, 2, 4, 1, 3, 5, 2, 2, 5, 1, 3, 4, 3,
-];
+const EXAMPLE_VALUES = [1, 5, 2, 4, 4, 2, 4, 2, 5, 1, 3, 3, 2, 4, 1, 3, 5, 2, 2, 5, 1, 3, 4, 3];
 const EXAMPLE_ANSWERS = QUESTIONS.map((q, i) => ({
   questionId: q.id,
   value: EXAMPLE_VALUES[i]!,

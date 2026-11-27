@@ -23,8 +23,7 @@ export const ALICE: GoogleProfile = {
   name: "Alice",
 };
 
-const b64url = (v: unknown) =>
-  Buffer.from(JSON.stringify(v)).toString("base64url");
+const b64url = (v: unknown) => Buffer.from(JSON.stringify(v)).toString("base64url");
 
 /** Unsigned JWT shaped like a Google id_token. */
 function fakeIdToken(p: GoogleProfile) {

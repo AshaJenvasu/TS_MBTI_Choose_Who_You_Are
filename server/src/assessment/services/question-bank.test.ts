@@ -10,9 +10,7 @@ const AXES = {
 
 describe("QUESTIONS", () => {
   it("has 24 questions with fixed ids 1..24 in order", () => {
-    expect(QUESTIONS.map((q) => q.id)).toEqual(
-      Array.from({ length: 24 }, (_, i) => i + 1),
-    );
+    expect(QUESTIONS.map((q) => q.id)).toEqual(Array.from({ length: 24 }, (_, i) => i + 1));
   });
 
   it("has exactly 6 questions per axis", () => {

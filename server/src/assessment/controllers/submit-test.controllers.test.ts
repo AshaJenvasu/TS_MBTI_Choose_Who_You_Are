@@ -30,15 +30,13 @@ let googleUser: GoogleProfile = ALICE;
 async function signInAs(who: GoogleProfile) {
   googleUser = who;
   const { jar } = await client.signIn();
-  const { rows } = await pool.query<{ id: string }>(
-    `select id from "user" where email = $1`,
-    [who.email],
-  );
+  const { rows } = await pool.query<{ id: string }>(`select id from "user" where email = $1`, [
+    who.email,
+  ]);
   return { jar, userId: rows[0]!.id };
 }
 
-const UUID =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 /**
  * Answers that push every axis toward `type`: agree strongly (5) with items whose
@@ -61,8 +59,7 @@ const submit = (body: unknown, extraHeaders: Record<string, string> = {}) =>
   });
 
 const countResults = async () =>
-  (await pool.query<{ n: number }>(`select count(*)::int as n from test_result`))
-    .rows[0]!.n;
+  (await pool.query<{ n: number }>(`select count(*)::int as n from test_result`)).rows[0]!.n;
 
 beforeEach(async () => {
   await clearTestData(pool);
@@ -142,9 +139,7 @@ describe("POST /test/submit — AC1 guest submit succeeds", () => {
   });
 
   it("accepts the 24 answers in any order", async () => {
-    const body = await (
-      await submit({ answers: [...ENFP_ANSWERS].reverse() })
-    ).json();
+    const body = await (await submit({ answers: [...ENFP_ANSWERS].reverse() })).json();
     expect(body.mbtiType).toBe("ENFP");
   });
 });
@@ -300,10 +295,7 @@ describe("OpenAPI document", () => {
     const answers = schemas.SubmitTestRequest.properties.answers;
     expect(answers.minItems).toBe(24);
     expect(answers.maxItems).toBe(24);
-    expect(Object.keys(answers.items.properties).sort()).toEqual([
-      "questionId",
-      "value",
-    ]);
+    expect(Object.keys(answers.items.properties).sort()).toEqual(["questionId", "value"]);
     expect(answers.items.properties.value.minimum).toBe(1);
     expect(answers.items.properties.value.maximum).toBe(5);
   });
@@ -313,9 +305,7 @@ describe("OpenAPI document", () => {
     const example = schemas.SubmitTestRequest.properties.answers.example;
 
     expect(example).toHaveLength(24);
-    expect(example.map((a: any) => a.questionId)).toEqual(
-      QUESTIONS.map((q) => q.id),
-    );
+    expect(example.map((a: any) => a.questionId)).toEqual(QUESTIONS.map((q) => q.id));
 
     const res = await submit({ answers: example });
     expect(res.status).toBe(201);
@@ -470,8 +460,12 @@ describe("Ticket 5 — OpenAPI", () => {
   const schemas = app.getOpenAPIDocument(OPENAPI_CONFIG).components?.schemas as Record<string, any>;
 
   it("both responses reference one shared Breakdown schema of 4 integer % fields", () => {
-    expect(schemas.SubmitTestResponse.properties.breakdown.$ref).toBe("#/components/schemas/Breakdown");
-    expect(schemas.GetResultResponse.properties.breakdown.$ref).toBe("#/components/schemas/Breakdown");
+    expect(schemas.SubmitTestResponse.properties.breakdown.$ref).toBe(
+      "#/components/schemas/Breakdown",
+    );
+    expect(schemas.GetResultResponse.properties.breakdown.$ref).toBe(
+      "#/components/schemas/Breakdown",
+    );
     const b = schemas.Breakdown;
     expect(Object.keys(b.properties).sort()).toEqual(["ei", "jp", "sn", "tf"]);
     for (const field of Object.values(b.properties) as any[]) {

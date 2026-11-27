@@ -14,11 +14,7 @@ import {
   InvalidGetResultRequestResponse,
   ResultNotFoundResponse,
 } from "../schema/get-result.schema";
-import {
-  getResult,
-  ResultNotFoundError,
-  type ResultViewer,
-} from "../services/get-result.services";
+import { getResult, ResultNotFoundError, type ResultViewer } from "../services/get-result.services";
 import { AUTH_REQUIRED_BODY, RESULT_NOT_FOUND_BODY, resultRequestHook } from "./result-errors";
 
 export function createGetResultRoutes(db: Db, auth?: Auth) {
@@ -35,8 +31,7 @@ export function createGetResultRoutes(db: Db, auth?: Auth) {
     request: { params: GetResultParams, headers: GetResultHeaders },
     responses: {
       200: {
-        description:
-          "The result, for the guest token or the signed-in user that owns it",
+        description: "The result, for the guest token or the signed-in user that owns it",
         content: { "application/json": { schema: GetResultResponse } },
       },
       400: {

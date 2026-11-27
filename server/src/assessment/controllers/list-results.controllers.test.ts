@@ -50,19 +50,14 @@ afterAll(async () => {
 async function signInAs(who: GoogleProfile) {
   googleUser = who;
   const { jar } = await client.signIn();
-  const { rows } = await pool.query<{ id: string }>(
-    `select id from "user" where email = $1`,
-    [who.email],
-  );
+  const { rows } = await pool.query<{ id: string }>(`select id from "user" where email = $1`, [
+    who.email,
+  ]);
   return { jar, userId: rows[0]!.id };
 }
 
 /** Inserts a result owned by a user (or a guest when userId is null) at a fixed time. */
-async function insertResult(opts: {
-  userId: string | null;
-  mbtiType: string;
-  createdAt: string;
-}) {
+async function insertResult(opts: { userId: string | null; mbtiType: string; createdAt: string }) {
   const { rows } = await pool.query<{ id: string }>(
     `insert into test_result (user_id, guest_token, mbti_type, matched_character_id, created_at,
                               ei_score, sn_score, tf_score, jp_score)
@@ -134,9 +129,21 @@ const INVALID_PAGE = { error: { code: "INVALID_PAGE", message: expect.any(String
 describe("GET /results — AC1 the signed-in user's results, newest first", () => {
   it("returns every result of the user, ordered by created_at DESC, as whitelisted DTOs", async () => {
     const { jar, userId } = await signInAs(ALICE);
-    const oldest = await insertResult({ userId, mbtiType: "INTJ", createdAt: "2026-01-01T00:00:00Z" });
-    const newest = await insertResult({ userId, mbtiType: "ENFP", createdAt: "2026-03-01T00:00:00Z" });
-    const middle = await insertResult({ userId, mbtiType: "ISTP", createdAt: "2026-02-01T00:00:00Z" });
+    const oldest = await insertResult({
+      userId,
+      mbtiType: "INTJ",
+      createdAt: "2026-01-01T00:00:00Z",
+    });
+    const newest = await insertResult({
+      userId,
+      mbtiType: "ENFP",
+      createdAt: "2026-03-01T00:00:00Z",
+    });
+    const middle = await insertResult({
+      userId,
+      mbtiType: "ISTP",
+      createdAt: "2026-02-01T00:00:00Z",
+    });
 
     const res = await list(jar);
 
@@ -193,12 +200,28 @@ describe("GET /results — AC4 BOLA: only the session user's results", () => {
     const bob = await signInAs(BOB);
     const alice = await signInAs(ALICE);
     const aliceIds = [
-      await insertResult({ userId: alice.userId, mbtiType: "INFJ", createdAt: "2026-01-02T00:00:00Z" }),
-      await insertResult({ userId: alice.userId, mbtiType: "ENTP", createdAt: "2026-01-04T00:00:00Z" }),
+      await insertResult({
+        userId: alice.userId,
+        mbtiType: "INFJ",
+        createdAt: "2026-01-02T00:00:00Z",
+      }),
+      await insertResult({
+        userId: alice.userId,
+        mbtiType: "ENTP",
+        createdAt: "2026-01-04T00:00:00Z",
+      }),
     ];
     const othersIds = [
-      await insertResult({ userId: bob.userId, mbtiType: "ESTJ", createdAt: "2026-01-03T00:00:00Z" }),
-      await insertResult({ userId: bob.userId, mbtiType: "ISFP", createdAt: "2026-01-05T00:00:00Z" }),
+      await insertResult({
+        userId: bob.userId,
+        mbtiType: "ESTJ",
+        createdAt: "2026-01-03T00:00:00Z",
+      }),
+      await insertResult({
+        userId: bob.userId,
+        mbtiType: "ISFP",
+        createdAt: "2026-01-05T00:00:00Z",
+      }),
       await insertResult({ userId: null, mbtiType: "ENFJ", createdAt: "2026-01-06T00:00:00Z" }),
     ];
 
@@ -212,7 +235,11 @@ describe("GET /results — AC4 BOLA: only the session user's results", () => {
   it("a user id sent by the client is ignored: the session decides", async () => {
     const bob = await signInAs(BOB);
     const alice = await signInAs(ALICE);
-    const bobResult = await insertResult({ userId: bob.userId, mbtiType: "ESTJ", createdAt: "2026-01-03T00:00:00Z" });
+    const bobResult = await insertResult({
+      userId: bob.userId,
+      mbtiType: "ESTJ",
+      createdAt: "2026-01-03T00:00:00Z",
+    });
 
     const res = await app.request(`/results?userId=${bob.userId}&user_id=${bob.userId}`, {
       headers: { Cookie: alice.jar.header(), "X-User-Id": bob.userId },
@@ -227,8 +254,16 @@ describe("GET /results — AC4 BOLA: only the session user's results", () => {
   it("each user gets their own list from the same endpoint", async () => {
     const bob = await signInAs(BOB);
     const alice = await signInAs(ALICE);
-    const a = await insertResult({ userId: alice.userId, mbtiType: "INFJ", createdAt: "2026-01-02T00:00:00Z" });
-    const b = await insertResult({ userId: bob.userId, mbtiType: "ESTJ", createdAt: "2026-01-03T00:00:00Z" });
+    const a = await insertResult({
+      userId: alice.userId,
+      mbtiType: "INFJ",
+      createdAt: "2026-01-02T00:00:00Z",
+    });
+    const b = await insertResult({
+      userId: bob.userId,
+      mbtiType: "ESTJ",
+      createdAt: "2026-01-03T00:00:00Z",
+    });
 
     const forAlice = ((await (await list(alice.jar)).json()) as Page).items.map((r) => r.id);
     const forBob = ((await (await list(bob.jar)).json()) as Page).items.map((r) => r.id);
@@ -253,8 +288,16 @@ describe("GET /results — OpenAPI", () => {
     const item = doc.components?.schemas?.ResultListItem as {
       properties: Record<string, { properties?: object }>;
     };
-    expect(Object.keys(item.properties).sort()).toEqual(["character", "createdAt", "id", "mbtiType"]);
-    expect(Object.keys(item.properties.character!.properties!).sort()).toEqual(["imageUrl", "name"]);
+    expect(Object.keys(item.properties).sort()).toEqual([
+      "character",
+      "createdAt",
+      "id",
+      "mbtiType",
+    ]);
+    expect(Object.keys(item.properties.character!.properties!).sort()).toEqual([
+      "imageUrl",
+      "name",
+    ]);
   });
 
   it("GET /results/{resultId} (guest token) is still documented", () => {
@@ -332,7 +375,13 @@ describe("GET /results — C1 AC4 page past the last one", () => {
     const res = await listQuery("?page=4", jar);
 
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ items: [], page: 4, pageSize: 10, total: 25, totalPages: 3 });
+    expect(await res.json()).toEqual({
+      items: [],
+      page: 4,
+      pageSize: 10,
+      total: 25,
+      totalPages: 3,
+    });
   });
 });
 
@@ -377,7 +426,13 @@ describe("GET /results — C1 AC7 MAX_PAGE boundary", () => {
     const res = await listQuery("?page=1000", jar);
 
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ items: [], page: 1000, pageSize: 10, total: 1, totalPages: 1 });
+    expect(await res.json()).toEqual({
+      items: [],
+      page: 1000,
+      pageSize: 10,
+      total: 1,
+      totalPages: 1,
+    });
   });
 
   it("page=1001 → 400 INVALID_PAGE", async () => {
@@ -391,23 +446,21 @@ describe("GET /results — C1 AC7 MAX_PAGE boundary", () => {
 });
 
 describe("GET /results — C1 AC8 the client cannot choose how many rows the server reads", () => {
-  it.each([
-    "?pageSize=500",
-    "?limit=500",
-    "?offset=5",
-    "?pageSize=500&limit=500&offset=5",
-  ])("%s is ignored: still page 1 with at most 10 items", async (query) => {
-    const { jar, userId } = await signInAs(ALICE);
-    await insertMany({ userId, count: 25, base: BASE });
-    const expected = await idsInDbOrder(userId);
+  it.each(["?pageSize=500", "?limit=500", "?offset=5", "?pageSize=500&limit=500&offset=5"])(
+    "%s is ignored: still page 1 with at most 10 items",
+    async (query) => {
+      const { jar, userId } = await signInAs(ALICE);
+      await insertMany({ userId, count: 25, base: BASE });
+      const expected = await idsInDbOrder(userId);
 
-    const res = await listQuery(query, jar);
+      const res = await listQuery(query, jar);
 
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as Page;
-    expect(body.items.map((r) => r.id)).toEqual(expected.slice(0, 10));
-    expect(body).toMatchObject({ page: 1, pageSize: 10, total: 25, totalPages: 3 });
-  });
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as Page;
+      expect(body.items.map((r) => r.id)).toEqual(expected.slice(0, 10));
+      expect(body).toMatchObject({ page: 1, pageSize: 10, total: 25, totalPages: 3 });
+    },
+  );
 });
 
 describe("GET /results — C1 AC9 no session → 401 before page is validated", () => {

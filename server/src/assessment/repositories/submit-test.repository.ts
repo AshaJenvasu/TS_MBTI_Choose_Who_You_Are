@@ -3,10 +3,7 @@ import type { Db } from "../../db/client";
 import { character, mbtiTypeInfo, testResult } from "./schema";
 
 /** One join: the character seeded for a type, plus that type's golden pair. */
-export async function findCharacterAndGoldenPairByMbtiType(
-  db: Db,
-  mbtiType: string,
-) {
+export async function findCharacterAndGoldenPairByMbtiType(db: Db, mbtiType: string) {
   const [row] = await db
     .select({
       characterId: character.id,
@@ -36,9 +33,6 @@ export type NewTestResult = {
 
 /** Inserts one test_result row and returns its generated id. */
 export async function insertTestResult(db: Db, values: NewTestResult) {
-  const [saved] = await db
-    .insert(testResult)
-    .values(values)
-    .returning({ id: testResult.id });
+  const [saved] = await db.insert(testResult).values(values).returning({ id: testResult.id });
   return saved!.id;
 }

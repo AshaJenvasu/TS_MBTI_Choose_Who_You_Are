@@ -1,8 +1,5 @@
 import type { Db } from "../../db/client";
-import {
-  countResultsByUserId,
-  findResultsByUserId,
-} from "../repositories/list-results.repository";
+import { countResultsByUserId, findResultsByUserId } from "../repositories/list-results.repository";
 import { PAGE_SIZE } from "./pagination";
 
 export type ResultListItem = {
