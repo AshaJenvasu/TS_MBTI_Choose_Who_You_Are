@@ -14,7 +14,7 @@ BOUNDED CONTEXTS:
 - Claim = การผูกผล guest เข้ากับบัญชีที่สมัคร/login
 - ShareLink = ลิงก์สาธารณะสำหรับแชร์ผล
   LATEST EVENT FLOW: User → ClaimResult (POST /results/:resultId/claim, requireAuth, X-Guest-Token) → SessionValidated → atomic UPDATE (user_id = me, guest_token = NULL WHERE user_id IS NULL AND guest_token = token) → ResultClaimed (200 short item; then in GET /results) | already mine → 200 same result (idempotent) | someone else's / wrong token / no such id → NotFound (404) | no session → Unauthorized (401)
-  CURRENT FEATURE: Epic 2 (Identity & Claim) backend เสร็จและ commit แล้ว (B1 commit e12be19) · ถัดไป: Epic 3 (History) ยังไม่เริ่ม
+  CURRENT FEATURE: Epic 3 (History) — C1 pagination ของ GET /results + index commit แล้ว (commit 9b095b0) · Hardening H3 (แยก test DB `mbti_test` + guard) งานเสร็จ รอ commit · Epic 2 (Identity & Claim) commit แล้ว (B1 commit e12be19)
 
 ## Working style
 
@@ -32,3 +32,14 @@ BOUNDED CONTEXTS:
 
 - `/api/auth/*` (sign-in/social, callback/google, sign-out, get-session) เป็นของ Better Auth เอง mount ใน `server/src/app.ts` — ไม่ผ่าน `@hono/zod-openapi` และไม่อยู่ใน `/doc` (OpenAPI)
 - ห้ามสร้าง OpenAPI entry ปลอมให้ route เหล่านี้ — ดู spec ที่ Better Auth docs: https://www.better-auth.com/docs/concepts/api
+
+## Tests (database)
+
+- รัน: `cd server && bun run test` (ต้องเปิด Postgres ก่อน: `bun run db:up`) ไม่ต้อง migrate/seed ฐาน test เอง
+- test ใช้ฐานแยกชื่อ `mbti_test` ใน Postgres container เดียวกับ dev: `src/db/testing/global-setup.ts` สร้างฐาน (ถ้ายังไม่มี) → migrate ทุกไฟล์ใน `server/drizzle` → seed ข้อมูลอ้างอิง ทุกครั้งที่รัน (idempotent)
+- `TEST_DATABASE_URL` (ไม่บังคับ): ชี้ฐาน test อื่น ชื่อฐานต้องเป็น `[a-z0-9_]` และลงท้าย `_test` และต้องไม่ใช่ฐานเดียวกับ `DATABASE_URL` ไม่งั้น `vitest.config.ts` จะล้มทันทีก่อนต่อฐาน ถ้าไม่ตั้งจะใช้ `mbti_test` บน server ของ `DEFAULT_DATABASE_URL`
+- **กฎ: test ห้ามใช้ `DATABASE_URL`** (Bun โหลดจาก `server/.env` ให้เองอยู่แล้ว และวันหน้าจะชี้ฐานจริงตอน deploy)
+  - ไฟล์ test อ่าน URL ด้วย `testDatabaseUrl()` (`src/db/testing/test-db-url.ts`) เท่านั้น
+  - ล้างข้อมูลด้วย `clearTestData(pool)` (`src/db/testing/test-database.ts`) ซึ่งถาม `current_database()` ก่อนลบทุกครั้ง
+  - `vitest.config.ts` ตั้ง `test.env.DATABASE_URL` เป็นฐาน test ให้โค้ดที่ยังอ่าน `DATABASE_URL` ข้างใน test ด้วย
+- ห้ามตั้ง `TEST_DATABASE_URL` บนระบบ deploy และห้ามรัน test ใน pipeline ที่ต่อฐานจริง

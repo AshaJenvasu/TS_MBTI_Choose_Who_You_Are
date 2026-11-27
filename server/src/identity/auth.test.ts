@@ -1,5 +1,7 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import pg from "pg";
+import { clearTestData } from "../db/testing/test-database";
+import { testDatabaseUrl } from "../db/testing/test-db-url";
 import { createApp } from "../app";
 import { createDb } from "../db/client";
 import { createAuth } from "./auth";
@@ -14,10 +16,9 @@ import {
   TEST_AUTH_CONFIG,
 } from "./testing/fake-google";
 
-// Real Postgres (docker compose) with migrations + seed applied: `bun run db:setup`.
+// Test Postgres (a *_test database): created, migrated and seeded by src/db/testing/global-setup.ts.
 // Google is faked (see ./testing/fake-google.ts); the rest of the sign-in flow is real.
-const url =
-  process.env.DATABASE_URL ?? "postgres://mbti:mbti@localhost:5433/mbti";
+const url = testDatabaseUrl();
 const pool = new pg.Pool({ connectionString: url });
 const { db, close } = createDb(url);
 
@@ -29,7 +30,7 @@ const { request, startSignIn, signIn } = createTestClient(app);
 let googleUser: GoogleProfile = ALICE;
 
 beforeEach(async () => {
-  await clearIdentity();
+  await clearTestData(pool);
   googleUser = ALICE;
   stubGoogleTokenEndpoint(() => googleUser);
 });
@@ -39,19 +40,10 @@ afterEach(() => {
 });
 
 afterAll(async () => {
-  await clearIdentity();
+  await clearTestData(pool);
   await pool.end();
   await close();
 });
-
-/** FK order: test_result points at "user"; session/account cascade but are cleared explicitly. */
-async function clearIdentity() {
-  await pool.query(`delete from test_result`);
-  await pool.query(`delete from session`);
-  await pool.query(`delete from account`);
-  await pool.query(`delete from verification`);
-  await pool.query(`delete from "user"`);
-}
 
 const getSession = async (jar: CookieJar) => {
   const res = await request("/api/auth/get-session", jar);

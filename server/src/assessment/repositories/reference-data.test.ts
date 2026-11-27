@@ -1,10 +1,10 @@
 import { afterAll, describe, expect, it } from "vitest";
 import pg from "pg";
+import { testDatabaseUrl } from "../../db/testing/test-db-url";
 
-// Queries the real Postgres after `bun run db:setup` (migration + seed).
+// Test Postgres (a *_test database): created, migrated and seeded by src/db/testing/global-setup.ts.
 const pool = new pg.Pool({
-  connectionString:
-    process.env.DATABASE_URL ?? "postgres://mbti:mbti@localhost:5433/mbti",
+  connectionString: testDatabaseUrl(),
 });
 
 afterAll(() => pool.end());

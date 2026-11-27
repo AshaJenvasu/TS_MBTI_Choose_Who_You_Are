@@ -1,5 +1,7 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import pg from "pg";
+import { clearTestData } from "../../db/testing/test-database";
+import { testDatabaseUrl } from "../../db/testing/test-db-url";
 import { createApp, OPENAPI_CONFIG } from "../../app";
 import { createDb } from "../../db/client";
 import { createAuth } from "../../identity/auth";
@@ -13,9 +15,8 @@ import {
 } from "../../identity/testing/fake-google";
 import { QUESTIONS } from "../services/question-bank";
 
-// Real Postgres (docker compose) with migration + seed applied: `bun run db:setup`.
-const url =
-  process.env.DATABASE_URL ?? "postgres://mbti:mbti@localhost:5433/mbti";
+// Test Postgres (a *_test database): created, migrated and seeded by src/db/testing/global-setup.ts.
+const url = testDatabaseUrl();
 const pool = new pg.Pool({ connectionString: url });
 const { db, close } = createDb(url);
 const auth = createAuth(db, TEST_AUTH_CONFIG);
@@ -63,16 +64,8 @@ const countResults = async () =>
   (await pool.query<{ n: number }>(`select count(*)::int as n from test_result`))
     .rows[0]!.n;
 
-async function clearAll() {
-  await pool.query(`delete from test_result`);
-  await pool.query(`delete from session`);
-  await pool.query(`delete from account`);
-  await pool.query(`delete from verification`);
-  await pool.query(`delete from "user"`);
-}
-
 beforeEach(async () => {
-  await clearAll();
+  await clearTestData(pool);
   googleUser = ALICE;
   stubGoogleTokenEndpoint(() => googleUser);
 });
@@ -82,7 +75,7 @@ afterEach(() => {
 });
 
 afterAll(async () => {
-  await clearAll();
+  await clearTestData(pool);
   await pool.end();
   await close();
 });

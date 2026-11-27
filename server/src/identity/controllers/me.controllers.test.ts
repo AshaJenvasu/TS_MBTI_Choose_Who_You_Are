@@ -1,6 +1,8 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Hono } from "hono";
 import pg from "pg";
+import { clearTestData } from "../../db/testing/test-database";
+import { testDatabaseUrl } from "../../db/testing/test-db-url";
 import { createApp, OPENAPI_CONFIG } from "../../app";
 import { createDb } from "../../db/client";
 import { createAuth } from "../auth";
@@ -13,9 +15,8 @@ import {
   TEST_AUTH_CONFIG,
 } from "../testing/fake-google";
 
-// Real Postgres (docker compose) with migrations + seed applied: `bun run db:setup`.
-const url =
-  process.env.DATABASE_URL ?? "postgres://mbti:mbti@localhost:5433/mbti";
+// Test Postgres (a *_test database): created, migrated and seeded by src/db/testing/global-setup.ts.
+const url = testDatabaseUrl();
 const pool = new pg.Pool({ connectionString: url });
 const { db, close } = createDb(url);
 
@@ -29,7 +30,7 @@ const UNAUTHORIZED = {
 };
 
 beforeEach(async () => {
-  await clearIdentity();
+  await clearTestData(pool);
   stubGoogleTokenEndpoint(() => ALICE);
 });
 
@@ -38,18 +39,10 @@ afterEach(() => {
 });
 
 afterAll(async () => {
-  await clearIdentity();
+  await clearTestData(pool);
   await pool.end();
   await close();
 });
-
-async function clearIdentity() {
-  await pool.query(`delete from test_result`);
-  await pool.query(`delete from session`);
-  await pool.query(`delete from account`);
-  await pool.query(`delete from verification`);
-  await pool.query(`delete from "user"`);
-}
 
 /** Signed-in browser: cookie jar holding a valid session cookie. */
 async function signedIn() {

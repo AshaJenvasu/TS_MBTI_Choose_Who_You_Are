@@ -1,5 +1,7 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import pg from "pg";
+import { clearTestData } from "../../db/testing/test-database";
+import { testDatabaseUrl } from "../../db/testing/test-db-url";
 import { createApp, OPENAPI_CONFIG } from "../../app";
 import { createDb } from "../../db/client";
 import { createAuth } from "../../identity/auth";
@@ -12,9 +14,8 @@ import {
   TEST_AUTH_CONFIG,
 } from "../../identity/testing/fake-google";
 
-// Real Postgres (docker compose) with migrations + seed applied: `bun run db:setup`.
-const url =
-  process.env.DATABASE_URL ?? "postgres://mbti:mbti@localhost:5433/mbti";
+// Test Postgres (a *_test database): created, migrated and seeded by src/db/testing/global-setup.ts.
+const url = testDatabaseUrl();
 const pool = new pg.Pool({ connectionString: url });
 const { db, close } = createDb(url);
 
@@ -30,7 +31,7 @@ const UNAUTHORIZED = {
 let googleUser: GoogleProfile = ALICE;
 
 beforeEach(async () => {
-  await clearAll();
+  await clearTestData(pool);
   googleUser = ALICE;
   stubGoogleTokenEndpoint(() => googleUser);
 });
@@ -40,18 +41,10 @@ afterEach(() => {
 });
 
 afterAll(async () => {
-  await clearAll();
+  await clearTestData(pool);
   await pool.end();
   await close();
 });
-
-async function clearAll() {
-  await pool.query(`delete from test_result`);
-  await pool.query(`delete from session`);
-  await pool.query(`delete from account`);
-  await pool.query(`delete from verification`);
-  await pool.query(`delete from "user"`);
-}
 
 /** Signs in as `who` through the real (fake-Google) flow; returns the jar and user id. */
 async function signInAs(who: GoogleProfile) {
