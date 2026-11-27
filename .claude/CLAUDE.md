@@ -14,7 +14,7 @@ BOUNDED CONTEXTS:
 - Claim = การผูกผล guest เข้ากับบัญชีที่สมัคร/login
 - ShareLink = ลิงก์สาธารณะสำหรับแชร์ผล
   LATEST EVENT FLOW: User → ClaimResult (POST /results/:resultId/claim, requireAuth, X-Guest-Token) → SessionValidated → atomic UPDATE (user_id = me, guest_token = NULL WHERE user_id IS NULL AND guest_token = token) → ResultClaimed (200 short item; then in GET /results) | already mine → 200 same result (idempotent) | someone else's / wrong token / no such id → NotFound (404) | no session → Unauthorized (401)
-  CURRENT FEATURE: Epic 3 (History) — C1 pagination ของ GET /results + index commit แล้ว (commit 9b095b0) · Hardening H3 (แยก test DB `mbti_test` + guard) งานเสร็จ รอ commit · Epic 2 (Identity & Claim) commit แล้ว (B1 commit e12be19)
+  CURRENT FEATURE: Epic 3 ปิดแล้ว — C1 (History: pagination ของ GET /results + index), H3 (แยก test DB `mbti_test` + guard), H4 (รวม error body 4xx ด้วย errorBody + hook ร่วม), H5 (Biome format + lint + `bun run verify`) commit ครบทั้งหมด · ถัดไป (ยังไม่ตัดสินใจลำดับ): Epic 3.5 CACHE-1 (ticket ยังไม่เขียน), 3.6 CI-1, แล้ว Epic 4 Sharing (backend)
 
 ## Working style
 
