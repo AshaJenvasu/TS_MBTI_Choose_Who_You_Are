@@ -48,3 +48,6 @@
 ### ขั้นต่อไป
 1. Review + commit ticket นี้
 2. Epic 2 Feature B (claim) — ใช้ `requireAuth` แบบเดียวกัน, claim แล้วผลจะโผล่ใน `GET /results`
+
+## หมายเหตุอัปเดต (2026-11-27)
+- บรรทัด 45 ("`test_result.user_id` ไม่มี index") ล้าสมัยแล้ว: Epic 3 · C1 เพิ่ม index `test_result_user_id_created_at_id_idx` บน `(user_id, created_at DESC, id DESC)` ใน migration `server/drizzle/0007_workable_zombie.sql` (commit `9b095b0`) ดูหลักฐาน EXPLAIN ใน `.scratch/results-pagination/HANDOFF.md`
